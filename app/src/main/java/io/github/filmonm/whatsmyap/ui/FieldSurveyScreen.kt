@@ -49,6 +49,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.filmonm.whatsmyap.core.Labels
 import io.github.filmonm.whatsmyap.core.Rules
+import io.github.filmonm.whatsmyap.data.SpeedTest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -83,6 +84,7 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
     }
 
     var askName by remember { mutableStateOf(false) }
+    var askTarget by remember { mutableStateOf(false) }
     var surveyMenu by remember { mutableStateOf(false) }
     var packing by remember { mutableStateOf<String?>(null) }
 
@@ -163,7 +165,9 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onCamera, enabled = s.wifi != null) { Text("Label photo") }
-                if (s.testing == null) Button(onClick = vm::runSpeedTest, enabled = s.wifi != null) { Text("Speed test") }
+                if (s.testing == null) Button(onClick = {
+                    if (vm.settings.localHostPort() != null) askTarget = true else vm.runSpeedTest()
+                }, enabled = s.wifi != null) { Text("Speed test") }
                 else OutlinedButton(onClick = vm::cancelSpeedTest) { Text("Stop test") }
             }
 
@@ -195,6 +199,19 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
             },
             confirmButton = { TextButton(onClick = { vm.startSurvey(name); askName = false }, enabled = name.isNotBlank()) { Text("Start") } },
             dismissButton = { TextButton(onClick = { askName = false }) { Text("Cancel") } },
+        )
+    }
+    if (askTarget) {
+        AlertDialog(
+            onDismissRequest = { askTarget = false },
+            title = { Text("Speed test to...") },
+            text = { Text("Local: the site's test server (${vm.settings.localHostPort()}), the SOP path.\nInternet: Teams check + M-Lab / Vultr.") },
+            confirmButton = {
+                TextButton(onClick = { askTarget = false; vm.runSpeedTest(SpeedTest.Target.LOCAL) }) { Text("Local server") }
+            },
+            dismissButton = {
+                TextButton(onClick = { askTarget = false; vm.runSpeedTest(SpeedTest.Target.INTERNET) }) { Text("Internet") }
+            },
         )
     }
     if (surveyMenu) {
@@ -275,12 +292,23 @@ private fun SpeedCard(vm: FieldViewModel, s: FieldState) {
             }
             val details = listOfNotNull(
                 "min/avg/max, %.0f MB in %.0f s".format(r.mb, r.secs),
-                (r.site + if (r.colo.isNotBlank()) " ${r.colo}" else "").ifBlank { null },
+                ((if (r.site == "mlab") "M-Lab" else r.site) + if (r.colo.isNotBlank()) " ${r.colo}" else "").ifBlank { null },
                 r.upMbps?.let { "Up %.0f Mbps".format(it) },
                 r.latencyMs?.let { "Latency %.0f ms".format(it) + (r.loadedLatencyMs?.let { l -> " (%.0f loaded)".format(l) } ?: "") },
                 r.jitterMs?.let { "Jitter %.0f ms".format(it) },
+                r.retransPct?.let { "Retransmits %.1f%%".format(it) },
             )
-            Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+            Text(details.joinToString(" \u00b7 "), style = MaterialTheme.typography.bodySmall)
+            val probe = r.teams
+            when {
+                probe != null && probe.ok -> Text(
+                    "Teams (UDP to Microsoft relay): RTT %.0f ms \u00b7 jitter %.1f ms \u00b7 loss %.1f%% (%d of %d answered)"
+                        .format(probe.rttMs, probe.jitterMs, probe.lossPct, probe.received, probe.sent),
+                    style = MaterialTheme.typography.bodySmall)
+                probe != null -> Text("Teams relay: ${probe.error}" +
+                    if (sp.teamsSource == "tcp-estimate") " - verdict estimated from the download test" else "",
+                    color = Warn, style = MaterialTheme.typography.bodySmall)
+            }
             sp.teams?.takeIf { !it.pass }?.let { Text("Teams: ${it.why}", color = Bad, style = MaterialTheme.typography.bodySmall) }
             if (sp.roamed) Text("Roamed during the test", color = Warn)
             if (tried) Text("Tried: " + r.attempts.joinToString(" \u2192 "), color = Warn, style = MaterialTheme.typography.bodySmall)

@@ -18,6 +18,7 @@ import io.github.filmonm.whatsmyap.ui.FieldSurveyScreen
 import io.github.filmonm.whatsmyap.ui.FieldViewModel
 import io.github.filmonm.whatsmyap.ui.HomeScreen
 import io.github.filmonm.whatsmyap.ui.ReportScreen
+import io.github.filmonm.whatsmyap.ui.SettingsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +39,8 @@ fun App(activity: ComponentActivity) {
     // one ViewModel for the whole Field Survey flow (survey, camera and report share it)
     val field: FieldViewModel = viewModel(viewModelStoreOwner = activity)
     NavHost(navController = nav, startDestination = "home") {
-        composable("home") { HomeScreen(onField = { nav.navigate("field") }) }
+        composable("home") { HomeScreen(onField = { nav.navigate("field") }, onSettings = { nav.navigate("settings") }) }
+        composable("settings") { SettingsScreen(field, onBack = { nav.popBackStack() }) }
         composable("field") {
             FieldSurveyScreen(field, onCamera = { nav.navigate("camera") }, onReport = { nav.navigate("report") },
                 onBack = { nav.popBackStack() })
