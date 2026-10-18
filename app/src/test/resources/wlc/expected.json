@@ -1,0 +1,1057 @@
+{
+ "ap_number": {
+  "": null,
+  "2164_AP49": 49,
+  "7761_AP14": 14,
+  "AP-08": 8,
+  "AP008": 8,
+  "AP14": 14,
+  "ap_12b": 12,
+  "lobby 3": 3
+ },
+ "aruba_ap_health_AP14": {
+  "ap": "AP14",
+  "asked": [
+   "show ap details ap-name AP14",
+   "show ap active ap-name AP14",
+   "show ap radio-summary ap-name AP14",
+   "show user-table ap-name AP14",
+   "show ap debug system-status ap-name AP14",
+   "show ap port status ap-name AP14"
+  ],
+  "facts": {
+   "ap": "AP14",
+   "bootstraps": 2,
+   "client_rows": [
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "band": "5",
+     "ssid": "SCHOOLNET"
+    }
+   ],
+   "cpu_pct": 9,
+   "cpu_peak_pct": 39,
+   "crash": false,
+   "eth": {
+    "duplex": "Full",
+    "iface": "bond0",
+    "mbps": 1000,
+    "status": "UP"
+   },
+   "flags": "da",
+   "group": "Electronics",
+   "ip": "172.24.0.10",
+   "location": "BLDG B, 1st Floor, Conference Room",
+   "mem_pct": 45,
+   "missing": [],
+   "model": "AP-215",
+   "poe_hw": "POE-AF",
+   "poe_restricted": false,
+   "poe_state": "No restrictions (Overridden by LLDP)",
+   "poe_type": "POE-AT",
+   "poe_watts": 18.1,
+   "radios": [
+    {
+     "band": "5",
+     "channel": "108",
+     "clients": 9,
+     "eirp_dbm": 12.0,
+     "enabled": true,
+     "interf_pct": 0,
+     "max_eirp_dbm": 29.7,
+     "mode": "AP",
+     "noise_dbm": -94,
+     "role": "",
+     "up": true,
+     "util_pct": 2,
+     "width": 40
+    },
+    {
+     "band": "2.4",
+     "channel": "1",
+     "clients": 0,
+     "eirp_dbm": 4.5,
+     "enabled": true,
+     "interf_pct": 2,
+     "max_eirp_dbm": 22.5,
+     "mode": "AP",
+     "noise_dbm": -96,
+     "role": "",
+     "up": true,
+     "util_pct": 7,
+     "width": 20
+    }
+   ],
+   "reboot_info": null,
+   "reboots": 2,
+   "rebootstraps": [
+    [
+     "2026-05-21 06:16:11",
+     "DHCP Lease expired"
+    ],
+    [
+     "2026-05-30 06:16:09",
+     "DHCP Lease expired"
+    ],
+    [
+     "2026-10-10 06:17:08",
+     "DHCP Lease expired"
+    ]
+   ],
+   "serial": "CNC0HMQ47P",
+   "state": "Up",
+   "uptime_s": 13982978
+  },
+  "link": {
+   "duplex": "Full",
+   "iface": "0",
+   "mbps": 1000,
+   "status": "UP"
+  },
+  "log": [
+   {
+    "ap_capwap_uptime_s": null,
+    "ap_clients": 9,
+    "ap_clients_by_ssid": "SCHOOLNET:9",
+    "ap_cpu_pct": 9,
+    "ap_cpu_peak_pct": 39,
+    "ap_crash": false,
+    "ap_ip": "172.24.0.10",
+    "ap_issues": 0,
+    "ap_last_rebootstrap": "2026-10-10 06:17:08 DHCP Lease expired",
+    "ap_location": "BLDG B, 1st Floor, Conference Room",
+    "ap_mem_pct": 45,
+    "ap_model": "AP-215",
+    "ap_name": "AP14",
+    "ap_number": 14,
+    "ap_reboots": 2,
+    "ap_rebootstraps": 3,
+    "ap_serial": "CNC0HMQ47P",
+    "ap_state": "Up",
+    "ap_status": "PASS",
+    "ap_uptime_s": 13982978,
+    "ap_version": null,
+    "error": null,
+    "link_duplex": "Full",
+    "link_mbps": 1000,
+    "link_status": "UP",
+    "poe_status": "PASS",
+    "poe_type": "POE-AT",
+    "poe_watts": 18.1,
+    "rf_tag": null,
+    "site": "samplelab",
+    "site_type": "of",
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   },
+   {
+    "ap_name": "AP14",
+    "ap_number": 14,
+    "band": "5",
+    "chan_util_pct": 2,
+    "channel": "108",
+    "eirp_dbm": 12.0,
+    "interference_pct": 0,
+    "noise_dbm": -94,
+    "radar_changes": null,
+    "radio_clients": 9,
+    "radio_cochannel": null,
+    "radio_neighbors": null,
+    "radio_state": "UP",
+    "radio_status": "PASS",
+    "radio_width_mhz": 40,
+    "site": "samplelab",
+    "site_type": "of",
+    "tx_power_dbm": null,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   },
+   {
+    "ap_name": "AP14",
+    "ap_number": 14,
+    "band": "2.4",
+    "chan_util_pct": 7,
+    "channel": "1",
+    "eirp_dbm": 4.5,
+    "interference_pct": 2,
+    "noise_dbm": -96,
+    "radar_changes": null,
+    "radio_clients": 0,
+    "radio_cochannel": null,
+    "radio_neighbors": null,
+    "radio_state": "UP",
+    "radio_status": "PASS",
+    "radio_width_mhz": 20,
+    "site": "samplelab",
+    "site_type": "of",
+    "tx_power_dbm": null,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   }
+  ],
+  "overall": "PASS",
+  "rows": [
+   [
+    "State",
+    "Up",
+    "PASS"
+   ],
+   [
+    "Uptime",
+    "161d 20h \u00b7 2 reboots on record",
+    "PASS"
+   ],
+   [
+    "Link",
+    "1 Gbps Full",
+    "PASS"
+   ],
+   [
+    "PoE",
+    "POE-AT \u00b7 18.1 W (LLDP) \u00b7 no restrictions (Overridden by LLDP) \u00b7 hardware POE-AF",
+    "PASS"
+   ],
+   [
+    "AP load",
+    "CPU 9% (peak 39% last hour) \u00b7 memory 45%",
+    "PASS"
+   ],
+   [
+    "Stability",
+    "no crashes \u00b7 3 rejoins (rebootstrap), last 2026-10-10 06:17 - DHCP Lease expired",
+    "PASS"
+   ],
+   [
+    "5 GHz",
+    "ch 108 (40 MHz) \u00b7 EIRP 12 dBm (max 29.7) \u00b7 util 2% \u00b7 noise -94 dBm \u00b7 interference 0% \u00b7 9 clients \u00b7 you're on this radio",
+    "PASS"
+   ],
+   [
+    "2.4 GHz",
+    "ch 1 (20 MHz) \u00b7 EIRP 4.5 dBm (max 22.5) \u00b7 util 7% \u00b7 noise -96 dBm \u00b7 interference 2% \u00b7 0 clients",
+    "PASS"
+   ],
+   [
+    "Clients",
+    "9 total \u00b7 SCHOOLNET 9 (5 GHz 9)",
+    null
+   ]
+  ],
+  "vendor": "aruba",
+  "wlc": "of-samplelab-w1"
+ },
+ "aruba_ap_link": {
+  "ap": "AP14",
+  "asked": [
+   "show ap port status ap-name AP14"
+  ],
+  "result": {
+   "duplex": "Full",
+   "iface": "0",
+   "mbps": 1000,
+   "status": "UP"
+  },
+  "vendor": "aruba"
+ },
+ "aruba_find_client": {
+  "asked": [
+   "show user ip 10.20.75.125"
+  ],
+  "ip": "10.20.75.125",
+  "result": {
+   "ap": "AP14",
+   "ap_ip": "172.24.0.10",
+   "band": "5",
+   "bssid": "b4:5d:50:a8:9d:10",
+   "channel": "108",
+   "raw": null,
+   "rssi_wlc": null,
+   "snr_wlc": 54,
+   "ssid": "SCHOOLNET",
+   "state": "Wireless"
+  },
+  "vendor": "aruba"
+ },
+ "aruba_find_client_missing": {
+  "asked": [
+   "show user ip 10.20.75.99",
+   "show global-user-table list ip-addr 10.20.75.99"
+  ],
+  "ip": "10.20.75.99",
+  "result": null,
+  "vendor": "aruba"
+ },
+ "aruba_wlc_health": {
+  "asked": [
+   "show cpu",
+   "show memory",
+   "show storage",
+   "show port status",
+   "show ap database | include Tot",
+   "show ap database status down",
+   "show user-table summary",
+   "show ap essid",
+   "show inventory",
+   "show switchinfo"
+  ],
+  "facts": {
+   "_down": [
+    "1683_AP039",
+    "1683_AP132",
+    "AP66",
+    "AP67",
+    "AP68",
+    "AP69",
+    "AP73",
+    "AP74",
+    "AP75",
+    "Test_AP_574",
+    "Test_AP_575",
+    "Test_AP_577"
+   ],
+   "_down_pct": 5.7,
+   "_ignored": [],
+   "_max_seen": null,
+   "_missing": 12,
+   "_total": 212,
+   "ap_crash_info": true,
+   "aps_down_names": [
+    "1683_AP039",
+    "1683_AP132",
+    "AP66",
+    "AP67",
+    "AP68",
+    "AP69",
+    "AP73",
+    "AP74",
+    "AP75",
+    "Test_AP_574",
+    "Test_AP_575",
+    "Test_AP_577"
+   ],
+   "aps_total": 212,
+   "clients_total": 434,
+   "clients_unique": 373,
+   "controller_crash": false,
+   "cpu_pct": 4.3,
+   "fan_fault": false,
+   "fans": 5,
+   "mem_pct": 18.1,
+   "mem_total_gb": 124.8,
+   "missing": [],
+   "model": "Aruba9240-US",
+   "psu_fault": false,
+   "psu_present": 1,
+   "psu_total": 2,
+   "reboot_cause": "AC power cycle",
+   "ssids": [
+    {
+     "aps": 124,
+     "clients": 0,
+     "ssid": "Comm"
+    },
+    {
+     "aps": 1,
+     "clients": 16,
+     "ssid": "SCHOOLNET-IoT"
+    },
+    {
+     "aps": null,
+     "clients": 7,
+     "ssid": "SCHOOLNET-Gue"
+    },
+    {
+     "aps": 1,
+     "clients": 344,
+     "ssid": "SCHOOLNET"
+    }
+   ],
+   "storage_mount": "/mnt/disk1",
+   "storage_pct": 15,
+   "temp_cpu_c": 47.2,
+   "temp_max_c": 47.2,
+   "uplinks": [
+    {
+     "duplex": "Full",
+     "error": "",
+     "mbps": 10000,
+     "port": "0/0/0"
+    }
+   ],
+   "uptime_s": 13989263,
+   "version": "8.10.0.15"
+  },
+  "log": [
+   {
+    "alarms_critical": null,
+    "alarms_major": null,
+    "alarms_minor": null,
+    "aps_down": 12,
+    "aps_down_list": "1683_AP039;1683_AP132;AP66;AP67;AP68;AP69;AP73;AP74;AP75;Test_AP_574;Test_AP_575;Test_AP_577",
+    "aps_down_pct": 5.7,
+    "aps_ignored": null,
+    "aps_joined": null,
+    "aps_max_seen": null,
+    "aps_missing": null,
+    "aps_total": 212,
+    "busiest_aps": null,
+    "clients_total": 434,
+    "clients_unique": 373,
+    "controller_crash": false,
+    "cpu_pct": 4.3,
+    "error": null,
+    "fans_ok": true,
+    "mem_pct": 18.1,
+    "psu_present": 1,
+    "psu_total": 2,
+    "radios_24_total": null,
+    "radios_24_up": null,
+    "radios_5_total": null,
+    "radios_5_up": null,
+    "radios_6_total": null,
+    "radios_6_up": null,
+    "reboot_cause": "AC power cycle",
+    "site": "samplelab",
+    "site_type": "of",
+    "storage_pct": 15,
+    "temp_cpu_c": 47.2,
+    "temp_max_c": 47.2,
+    "uplink_mbps": 10000,
+    "uplink_status": "PASS",
+    "wlc_model": "Aruba9240-US",
+    "wlc_name": "of-samplelab-w1",
+    "wlc_status": "WARN",
+    "wlc_uptime_s": 13989263,
+    "wlc_vendor": "aruba8",
+    "wlc_version": "8.10.0.15"
+   },
+   {
+    "clients": 0,
+    "clients_24": null,
+    "clients_5": null,
+    "clients_6": null,
+    "network": "Comm",
+    "site": "samplelab",
+    "site_type": "of",
+    "ssid": "Comm",
+    "ssid_aps": 124,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   },
+   {
+    "clients": 16,
+    "clients_24": null,
+    "clients_5": null,
+    "clients_6": null,
+    "network": "SCHOOLNET-IoT",
+    "site": "samplelab",
+    "site_type": "of",
+    "ssid": "SCHOOLNET-IoT",
+    "ssid_aps": 1,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   },
+   {
+    "clients": 7,
+    "clients_24": null,
+    "clients_5": null,
+    "clients_6": null,
+    "network": "SCHOOLNET-Gue",
+    "site": "samplelab",
+    "site_type": "of",
+    "ssid": "SCHOOLNET-Gue",
+    "ssid_aps": null,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   },
+   {
+    "clients": 344,
+    "clients_24": null,
+    "clients_5": null,
+    "clients_6": null,
+    "network": "SCHOOLNET",
+    "site": "samplelab",
+    "site_type": "of",
+    "ssid": "SCHOOLNET",
+    "ssid_aps": 1,
+    "wlc_name": "of-samplelab-w1",
+    "wlc_vendor": "aruba8"
+   }
+  ],
+  "overall": "WARN",
+  "rows": [
+   [
+    "Uptime",
+    "161d 21h \u00b7 last reboot: AC power cycle",
+    "PASS"
+   ],
+   [
+    "CPU",
+    "4%",
+    "PASS"
+   ],
+   [
+    "Memory",
+    "18%",
+    "PASS"
+   ],
+   [
+    "Storage",
+    "15% (/mnt/disk1)",
+    "PASS"
+   ],
+   [
+    "Uplink",
+    "0/0/0 10 Gbps Full",
+    "PASS"
+   ],
+   [
+    "APs",
+    "200/212 up \u00b7 12 down (5.7%)",
+    "WARN"
+   ],
+   [
+    "Clients",
+    "373 unique (434 sessions)",
+    null
+   ],
+   [
+    "Hardware",
+    "CPU 47\u00b0C \u00b7 PSU 1 of 2 \u00b7 5 fans OK",
+    "PASS"
+   ],
+   [
+    "Crashes",
+    "none on controller \u00b7 AP crash info present",
+    "PASS"
+   ]
+  ],
+  "vendor": "aruba",
+  "wlc": "of-samplelab-w1"
+ },
+ "cisco_ap_health_2164_AP49": {
+  "ap": "2164_AP49",
+  "asked": [
+   "show ap name 2164_AP49 config general",
+   "show ap name 2164_AP49 config dot11 5ghz",
+   "show ap name 2164_AP49 auto-rf dot11 5ghz",
+   "show ap name 2164_AP49 config dot11 24ghz",
+   "show wlan summary",
+   "show wireless client summary | include 2164_AP49"
+  ],
+  "facts": {
+   "ap": "2164_AP49",
+   "capwap_uptime_s": 2414639,
+   "client_rows": [],
+   "ip": "172.24.2.109",
+   "joined": "09/18/2026 15:44:46",
+   "location": "BLDG AA594, LIBRARY",
+   "missing": [
+    "dot11 2.4"
+   ],
+   "mode": "Local",
+   "model": "C9115AXI-B",
+   "poe_restricted": false,
+   "poe_type": "PoE/Full Power",
+   "policy_tag": "Policy_Classroom",
+   "radios": [
+    {
+     "admin": "Enabled",
+     "band": "5",
+     "channel": "112",
+     "clients": 0,
+     "cochannel": 2,
+     "cochannel_best": -78,
+     "dca_changes": 0,
+     "enabled": true,
+     "interf_pct": 0,
+     "neighbors": 24,
+     "noise_dbm": -97,
+     "oper": "Up",
+     "profiles_failed": [],
+     "radar_changes": 5,
+     "radio_type": "802.11ax - 5 GHz",
+     "role": "Client Serving",
+     "rx_util_pct": 0,
+     "tx_dbm": 5,
+     "tx_level": 6,
+     "tx_util_pct": 0,
+     "up": true,
+     "util_pct": 1,
+     "width": 20
+    }
+   ],
+   "rf_tag": "Classroom_Disable_24Ghz",
+   "serial": "FJC30151KAP",
+   "site_tag": "default-site-tag",
+   "slots": 2,
+   "state": "Registered",
+   "uptime_s": 2414805,
+   "version": "17.9.6.40"
+  },
+  "link": null,
+  "log": [
+   {
+    "ap_capwap_uptime_s": 2414639,
+    "ap_clients": 0,
+    "ap_clients_by_ssid": null,
+    "ap_cpu_pct": null,
+    "ap_cpu_peak_pct": null,
+    "ap_crash": null,
+    "ap_ip": "172.24.2.109",
+    "ap_issues": 0,
+    "ap_last_rebootstrap": null,
+    "ap_location": "BLDG AA594, LIBRARY",
+    "ap_mem_pct": null,
+    "ap_model": "C9115AXI-B",
+    "ap_name": "2164_AP49",
+    "ap_number": 49,
+    "ap_reboots": null,
+    "ap_rebootstraps": null,
+    "ap_serial": "FJC30151KAP",
+    "ap_state": "Registered",
+    "ap_status": "PASS",
+    "ap_uptime_s": 2414805,
+    "ap_version": "17.9.6.40",
+    "error": "couldn't read: dot11 2.4",
+    "link_duplex": null,
+    "link_mbps": null,
+    "link_status": null,
+    "poe_status": "PASS",
+    "poe_type": "PoE/Full Power",
+    "poe_watts": null,
+    "rf_tag": "Classroom_Disable_24Ghz",
+    "site": "sample",
+    "site_type": "es",
+    "wlc_name": "es-sample-w1",
+    "wlc_vendor": "cisco9800"
+   },
+   {
+    "ap_name": "2164_AP49",
+    "ap_number": 49,
+    "band": "5",
+    "chan_util_pct": 1,
+    "channel": "112",
+    "eirp_dbm": null,
+    "interference_pct": 0,
+    "noise_dbm": -97,
+    "radar_changes": 5,
+    "radio_clients": 0,
+    "radio_cochannel": 2,
+    "radio_neighbors": 24,
+    "radio_state": "UP",
+    "radio_status": "PASS",
+    "radio_width_mhz": 20,
+    "site": "sample",
+    "site_type": "es",
+    "tx_power_dbm": 5,
+    "wlc_name": "es-sample-w1",
+    "wlc_vendor": "cisco9800"
+   }
+  ],
+  "overall": "PASS",
+  "rows": [
+   [
+    "State",
+    "Registered",
+    "PASS"
+   ],
+   [
+    "Uptime",
+    "27d 22h \u00b7 joined 09/18/2026 15:44:46",
+    "PASS"
+   ],
+   [
+    "Link",
+    "?",
+    null
+   ],
+   [
+    "PoE",
+    "PoE/Full Power",
+    "PASS"
+   ],
+   [
+    "5 GHz",
+    "ch 112 (20 MHz) \u00b7 Tx 5 dBm (level 6) \u00b7 util 1% \u00b7 noise -97 dBm \u00b7 interference 0% \u00b7 0 clients \u00b7 24 APs heard \u00b7 2 on same channel (loudest -78 dBm) \u00b7 radar moved channel 5x \u00b7 you're on this radio",
+    "PASS"
+   ],
+   [
+    "Clients",
+    "0 total",
+    null
+   ]
+  ],
+  "vendor": "cisco",
+  "wlc": "es-sample-w1"
+ },
+ "cisco_ap_health_2164_AP99": {
+  "ap": "2164_AP99",
+  "asked": [
+   "show ap name 2164_AP99 config general",
+   "show ap name 2164_AP99 config dot11 5ghz",
+   "show ap name 2164_AP99 config dot11 24ghz",
+   "show wlan summary",
+   "show wireless client summary | include 2164_AP99"
+  ],
+  "facts": {
+   "ap": "2164_AP99",
+   "missing": [
+    "general",
+    "dot11 5",
+    "dot11 2.4",
+    "clients"
+   ],
+   "not_found": true,
+   "radios": []
+  },
+  "link": null,
+  "vendor": "cisco",
+  "wlc": "es-sample-w1"
+ },
+ "cisco_dot11_24": {
+  "result": {
+   "admin": "Enabled",
+   "channel": "1",
+   "enabled": true,
+   "oper": "Up",
+   "radio_type": "802.11ax - 2.4 GHz",
+   "role": "Client Serving",
+   "tx_dbm": 13,
+   "tx_level": 3,
+   "up": true,
+   "width": 20
+  }
+ },
+ "cisco_find_client": {
+  "asked": [
+   "show wireless client summary detail ipv4 | include 10.30.98.135",
+   "show wireless client mac-address 22db.6faa.1ed1 detail"
+  ],
+  "ip": "10.30.98.135",
+  "result": {
+   "ap": "7761_AP14",
+   "ap_ip": "",
+   "band": "5",
+   "bssid": "6c:d6:e3:3d:96:ce",
+   "channel": "44",
+   "raw": null,
+   "rssi_wlc": -47,
+   "snr_wlc": 50,
+   "ssid": "SCHOOLNET",
+   "state": "Associated"
+  },
+  "vendor": "cisco"
+ },
+ "cisco_wlc_health": {
+  "asked": [
+   "show version | include uptime|Version|reload reason",
+   "show platform resources",
+   "show ap summary | include Number of APs",
+   "show ap summary | exclude Registered",
+   "show wireless summary",
+   "show wlan summary",
+   "show environment summary",
+   "show interfaces status | include connected",
+   "show wireless client summary"
+  ],
+  "facts": {
+   "_down": [],
+   "_down_pct": 0.0,
+   "_ignored": [],
+   "_max_seen": 85,
+   "_missing": 0,
+   "_total": 85,
+   "alarms_critical": 0,
+   "alarms_major": 0,
+   "alarms_minor": 0,
+   "aps_joined": 85,
+   "aps_notreg_names": [],
+   "busiest_aps": [
+    [
+     "2164_AP26",
+     17
+    ],
+    [
+     "2164_AP35",
+     17
+    ],
+    [
+     "2164_AP17",
+     10
+    ],
+    [
+     "2164_AP69",
+     9
+    ],
+    [
+     "2164_AP71",
+     9
+    ]
+   ],
+   "clients_not_run": 5,
+   "clients_total": 144,
+   "cpu_level": "PASS",
+   "cpu_pct": 11.49,
+   "mem_level": "PASS",
+   "mem_pct": 33.0,
+   "missing": [
+    "version"
+   ],
+   "radios_24_total": 85,
+   "radios_24_up": 55,
+   "radios_5_total": 85,
+   "radios_5_up": 85,
+   "radios_6_total": 0,
+   "radios_6_up": 0,
+   "ssids": [
+    {
+     "aps": null,
+     "bands": {
+      "2.4": 1
+     },
+     "clients": 1,
+     "ssid": "SCHOOLNET-IoT"
+    },
+    {
+     "aps": null,
+     "bands": {
+      "2.4": 6,
+      "5": 131
+     },
+     "clients": 137,
+     "ssid": "SCHOOLNET"
+    },
+    {
+     "aps": null,
+     "bands": {
+      "2.4": 1,
+      "5": 2
+     },
+     "clients": 3,
+     "ssid": "SCHOOLNET-Guest"
+    }
+   ],
+   "temp_abnormal": [],
+   "temp_cpu_c": 50,
+   "temp_max_c": 50,
+   "uplinks": [
+    {
+     "duplex": "Full",
+     "error": "",
+     "mbps": 10000,
+     "port": "Te0/1/0"
+    }
+   ],
+   "wlans": [
+    {
+     "id": 5,
+     "ssid": "SCHOOLNET",
+     "up": true
+    },
+    {
+     "id": 8,
+     "ssid": "SCHOOLNET-IoT",
+     "up": true
+    },
+    {
+     "id": 10,
+     "ssid": "SCHOOLNET-Guest",
+     "up": true
+    }
+   ]
+  },
+  "log": [
+   {
+    "alarms_critical": 0,
+    "alarms_major": 0,
+    "alarms_minor": 0,
+    "aps_down": 0,
+    "aps_down_list": null,
+    "aps_down_pct": 0.0,
+    "aps_ignored": null,
+    "aps_joined": 85,
+    "aps_max_seen": 85,
+    "aps_missing": 0,
+    "aps_total": 85,
+    "busiest_aps": "2164_AP26:17;2164_AP35:17;2164_AP17:10;2164_AP69:9;2164_AP71:9",
+    "clients_total": 144,
+    "clients_unique": null,
+    "controller_crash": null,
+    "cpu_pct": 11.49,
+    "error": "couldn't read: version",
+    "fans_ok": null,
+    "mem_pct": 33.0,
+    "psu_present": null,
+    "psu_total": null,
+    "radios_24_total": 85,
+    "radios_24_up": 55,
+    "radios_5_total": 85,
+    "radios_5_up": 85,
+    "radios_6_total": null,
+    "radios_6_up": null,
+    "reboot_cause": null,
+    "site": "sample",
+    "site_type": "es",
+    "storage_pct": null,
+    "temp_cpu_c": 50,
+    "temp_max_c": 50,
+    "uplink_mbps": 10000,
+    "uplink_status": "PASS",
+    "wlc_model": null,
+    "wlc_name": "es-sample-w1",
+    "wlc_status": "PASS",
+    "wlc_uptime_s": null,
+    "wlc_vendor": "cisco9800",
+    "wlc_version": null
+   },
+   {
+    "clients": 1,
+    "clients_24": 1,
+    "clients_5": null,
+    "clients_6": null,
+    "network": "SCHOOLNET-IoT",
+    "site": "sample",
+    "site_type": "es",
+    "ssid": "SCHOOLNET-IoT",
+    "ssid_aps": null,
+    "wlc_name": "es-sample-w1",
+    "wlc_vendor": "cisco9800"
+   },
+   {
+    "clients": 137,
+    "clients_24": 6,
+    "clients_5": 131,
+    "clients_6": null,
+    "network": "SCHOOLNET",
+    "site": "sample",
+    "site_type": "es",
+    "ssid": "SCHOOLNET",
+    "ssid_aps": null,
+    "wlc_name": "es-sample-w1",
+    "wlc_vendor": "cisco9800"
+   },
+   {
+    "clients": 3,
+    "clients_24": 1,
+    "clients_5": 2,
+    "clients_6": null,
+    "network": "SCHOOLNET-Guest",
+    "site": "sample",
+    "site_type": "es",
+    "ssid": "SCHOOLNET-Guest",
+    "ssid_aps": null,
+    "wlc_name": "es-sample-w1",
+    "wlc_vendor": "cisco9800"
+   }
+  ],
+  "overall": "PASS",
+  "rows": [
+   [
+    "Uptime",
+    "?",
+    null
+   ],
+   [
+    "CPU",
+    "11%",
+    "PASS"
+   ],
+   [
+    "Memory",
+    "33%",
+    "PASS"
+   ],
+   [
+    "Uplink",
+    "Te0/1/0 10 Gbps Full",
+    "PASS"
+   ],
+   [
+    "APs",
+    "85 joined \u00b7 most seen 85",
+    "PASS"
+   ],
+   [
+    "Radios",
+    "5 GHz 85/85 on \u00b7 2.4 GHz 55/85 on",
+    "PASS"
+   ],
+   [
+    "Clients",
+    "144",
+    null
+   ],
+   [
+    "Hardware",
+    "CPU 50\u00b0C \u00b7 no alarms",
+    "PASS"
+   ]
+  ],
+  "vendor": "cisco",
+  "wlc": "es-sample-w1"
+ },
+ "other_name": [
+  [
+   "2164_AP49",
+   "26",
+   "2164_AP26"
+  ],
+  [
+   "AP008",
+   "9",
+   "AP009"
+  ],
+  [
+   "AP14",
+   "7",
+   "AP7"
+  ],
+  [
+   "2164_AP49",
+   "Lobby_AP",
+   "Lobby_AP"
+  ],
+  [
+   null,
+   "12",
+   "12"
+  ],
+  [
+   "7761_AP14",
+   "140",
+   "7761_AP140"
+  ]
+ ]
+}

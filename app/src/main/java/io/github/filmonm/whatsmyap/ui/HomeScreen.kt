@@ -22,7 +22,7 @@ import io.github.filmonm.whatsmyap.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onField: () -> Unit, onResults: () -> Unit, onSettings: () -> Unit) {
+fun HomeScreen(onField: () -> Unit, onNetEng: () -> Unit, onResults: () -> Unit, onSettings: () -> Unit) {
     Surface(Modifier.fillMaxSize()) {
         Column(
             Modifier.safeDrawingPadding().padding(24.dp),
@@ -39,12 +39,11 @@ fun HomeScreen(onField: () -> Unit, onResults: () -> Unit, onSettings: () -> Uni
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Card(onClick = onNetEng, modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(20.dp)) {
-                    Text("Network Engineer", style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Inspect, Debug my AP, Debug my WLC, Verify a survey. Unlocked by WLC credentials - coming in phase 2.",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Network Engineer", style = MaterialTheme.typography.titleLarge)
+                    Text("Inspect, Debug my AP, Debug my WLC. Needs a WLC login (saved on this tablet with a PIN).",
+                        style = MaterialTheme.typography.bodyMedium)
                 }
             }
             OutlinedCard(onClick = onResults, modifier = Modifier.fillMaxWidth()) {

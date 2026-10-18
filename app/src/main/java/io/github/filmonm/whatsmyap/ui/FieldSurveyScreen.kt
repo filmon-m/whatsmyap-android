@@ -235,8 +235,9 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
     }
 }
 
+/** The label photo for the AP the tablet is on. [wlcNumber]: the AP number the WLC reports (Inspect). */
 @Composable
-private fun PhotoCard(vm: FieldViewModel, s: FieldState) {
+fun PhotoCard(vm: FieldViewModel, s: FieldState, wlcNumber: Int? = null) {
     val p = vm.photoHere(s)
     if (s.readingLabel) { Text("Reading the label..."); LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     if (p == null) {
@@ -254,12 +255,14 @@ private fun PhotoCard(vm: FieldViewModel, s: FieldState) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Photo ✓ ${p.file.name}", style = MaterialTheme.typography.bodySmall)
                 val o = p.ocr
-                val v = Labels.verdict(null, s.tag, o?.number)
+                val v = Labels.verdict(wlcNumber, s.tag, o?.number)
                 when {
-                    o == null -> Text("Label unreadable - check the photo", color = Warn)
-                    v == Labels.Verdict.CONFLICT -> Text("Label reads ${o.text} ≠ typed #${s.tag}", color = Bad)
-                    v == Labels.Verdict.CONSISTENT -> Text("Label reads ${o.text} = typed #${s.tag}", color = Good)
-                    else -> Text("Label reads ${o.text} (#${o.number})", fontWeight = FontWeight.SemiBold)
+                    o == null -> Text("OCR: label unreadable - check the photo", color = Warn)
+                    v == Labels.Verdict.VERIFIED -> Text("OCR \u2713\u2713 label reads ${o.text} = WLC AP #$wlcNumber", color = Good, fontWeight = FontWeight.SemiBold)
+                    v == Labels.Verdict.MISMATCH -> Text("OCR \u2715 label reads ${o.text} \u2260 WLC AP #$wlcNumber", color = Bad, fontWeight = FontWeight.SemiBold)
+                    v == Labels.Verdict.CONFLICT -> Text("OCR: label reads ${o.text} ≠ typed #${s.tag}", color = Bad)
+                    v == Labels.Verdict.CONSISTENT -> Text("OCR: label reads ${o.text} = typed #${s.tag}", color = Good)
+                    else -> Text("OCR: label reads ${o.text} (#${o.number})", fontWeight = FontWeight.SemiBold)
                 }
                 Text("SHA-256 ${p.sha256.take(16)}…", style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -269,7 +272,7 @@ private fun PhotoCard(vm: FieldViewModel, s: FieldState) {
 }
 
 @Composable
-private fun SpeedCard(vm: FieldViewModel, s: FieldState) {
+fun SpeedCard(vm: FieldViewModel, s: FieldState) {
     val sp = vm.speedHere(s) ?: return
     val r = sp.result
     Card(Modifier.fillMaxWidth()) {

@@ -20,6 +20,7 @@ import io.github.filmonm.whatsmyap.data.Storage
 import io.github.filmonm.whatsmyap.data.Survey
 import io.github.filmonm.whatsmyap.data.WifiSource
 import io.github.filmonm.whatsmyap.data.WifiState
+import io.github.filmonm.whatsmyap.data.WlcMemory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +70,13 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     private var testJob: Job? = null
 
     val settings = Settings(app)
+    private val memory = WlcMemory(app)
+
+    /**
+     * While a Network Engineer screen (Inspect) is open, photo and speed results are logged there instead,
+     * as part of that screen's row with the WLC's answer.
+     */
+    var redirect: ((Map<String, Any?>) -> Unit)? = null
 
     init {
         settings.apply()
@@ -187,7 +195,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     suspend fun stageResults(): File = withContext(Dispatchers.IO) { Results.stage(ctx) }
 
     // ------------------------------------------------------------------ logging
-    private fun speedColumns(sp: Speed): Map<String, Any?> {
+    fun speedColumns(sp: Speed): Map<String, Any?> {
         val r = sp.result
         val notes = listOfNotNull("ROAMED".takeIf { sp.roamed }, "ABORTED".takeIf { r.aborted })
         val teams = sp.teams
@@ -208,6 +216,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun log(extra: Map<String, Any?>, wifiAt: WifiState?) {
+        redirect?.let { it(extra); return }
         val s = _state.value
         val w = wifiAt ?: s.wifi
         val photo = s.photo?.takeIf { p -> w?.apKey?.let { it.isNotEmpty() && it == p.apKey } == true }
@@ -220,24 +229,36 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "tx_link_mbps" to w?.linkMbps, "gateway_ip" to w?.gateway,
             "ap_number" to (s.tag ?: ocrNum), "label_entered" to s.tag,
         )
-        s.place?.let { p ->
-            row["gps_lat"] = "%.5f".format(java.util.Locale.US, p.lat)
-            row["gps_lon"] = "%.5f".format(java.util.Locale.US, p.lon)
-            row["gps_accuracy_m"] = p.accuracyM
-            row["gps_source"] = p.source
-            row["location_city"] = p.city.ifBlank { "N/A" }
-            row["location_name"] = p.name.ifBlank { null }
-            row["location_address"] = p.address.ifBlank { null }
-        }
+        memory.site(w?.ip)?.let { (site, type) -> row["site"] = site; row["site_type"] = type }   // learned on WLC visits
+        row.putAll(locationColumns())
         if (photo != null) {
             row.putAll(photo.columns())
             row["label_verdict"] = Labels.verdict(null, s.tag, ocrNum)?.name
         }
         row.putAll(extra)
+        write(listOf(row))
+    }
+
+    /** Where the tablet is, as log columns. */
+    fun locationColumns(): Map<String, Any?> {
+        val p = _state.value.place ?: return emptyMap()
+        return linkedMapOf(
+            "gps_lat" to "%.5f".format(java.util.Locale.US, p.lat),
+            "gps_lon" to "%.5f".format(java.util.Locale.US, p.lon),
+            "gps_accuracy_m" to p.accuracyM,
+            "gps_source" to p.source,
+            "location_city" to p.city.ifBlank { "N/A" },
+            "location_name" to p.name.ifBlank { null },
+            "location_address" to p.address.ifBlank { null },
+        )
+    }
+
+    /** Rows to this month's log, and to the running survey's file when there is one. */
+    fun write(rows: List<Map<String, Any?>>) {
         val name = survey.active
         viewModelScope.launch(Dispatchers.IO) {
-            CsvLog.write(File(Storage.logs(ctx), "whatsmyap_${Storage.month()}.csv"), listOf(row))
-            if (name != null) CsvLog.write(survey.csv(name), listOf(row + ("survey" to name)))
+            CsvLog.write(File(Storage.logs(ctx), "whatsmyap_${Storage.month()}.csv"), rows)
+            if (name != null) CsvLog.write(survey.csv(name), rows.map { it + ("survey" to name) })
             withContext(Dispatchers.Main) { refreshSurvey() }
         }
     }

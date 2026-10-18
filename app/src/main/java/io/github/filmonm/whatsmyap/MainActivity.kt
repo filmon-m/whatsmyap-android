@@ -16,7 +16,12 @@ import androidx.navigation.compose.rememberNavController
 import io.github.filmonm.whatsmyap.ui.CameraScreen
 import io.github.filmonm.whatsmyap.ui.FieldSurveyScreen
 import io.github.filmonm.whatsmyap.ui.FieldViewModel
+import io.github.filmonm.whatsmyap.ui.DebugApScreen
+import io.github.filmonm.whatsmyap.ui.DebugWlcScreen
 import io.github.filmonm.whatsmyap.ui.HomeScreen
+import io.github.filmonm.whatsmyap.ui.InspectScreen
+import io.github.filmonm.whatsmyap.ui.NetEngScreen
+import io.github.filmonm.whatsmyap.ui.NetEngViewModel
 import io.github.filmonm.whatsmyap.ui.ReportScreen
 import io.github.filmonm.whatsmyap.ui.SettingsScreen
 
@@ -38,8 +43,11 @@ fun App(activity: ComponentActivity) {
     val nav = rememberNavController()
     // one ViewModel for the whole Field Survey flow (survey, camera and report share it)
     val field: FieldViewModel = viewModel(viewModelStoreOwner = activity)
+    val neteng: NetEngViewModel = viewModel(viewModelStoreOwner = activity)
+    neteng.field = field
     NavHost(navController = nav, startDestination = "home") {
-        composable("home") { HomeScreen(onField = { nav.navigate("field") }, onResults = { nav.navigate("results") }, onSettings = { nav.navigate("settings") }) }
+        composable("home") { HomeScreen(onField = { nav.navigate("field") }, onNetEng = { nav.navigate("neteng") },
+                onResults = { nav.navigate("results") }, onSettings = { nav.navigate("settings") }) }
         composable("settings") { SettingsScreen(field, onBack = { nav.popBackStack() }) }
         composable("field") {
             FieldSurveyScreen(field, onCamera = { nav.navigate("camera") }, onReport = { nav.navigate("report") },
@@ -48,5 +56,12 @@ fun App(activity: ComponentActivity) {
         composable("camera") { CameraScreen(field, onDone = { nav.popBackStack() }) }
         composable("report") { ReportScreen(field, onBack = { nav.popBackStack() }) }
         composable("results") { ReportScreen(field, onBack = { nav.popBackStack() }, all = true) }
+        composable("neteng") {
+            NetEngScreen(neteng, onInspect = { nav.navigate("inspect") }, onDebugAp = { nav.navigate("debugap") },
+                onDebugWlc = { nav.navigate("debugwlc") }, onBack = { nav.popBackStack() })
+        }
+        composable("inspect") { InspectScreen(neteng, field, onCamera = { nav.navigate("camera") }, onBack = { nav.popBackStack() }) }
+        composable("debugap") { DebugApScreen(neteng, field, onBack = { nav.popBackStack() }) }
+        composable("debugwlc") { DebugWlcScreen(neteng, field, onBack = { nav.popBackStack() }) }
     }
 }
