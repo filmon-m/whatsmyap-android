@@ -49,6 +49,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.filmonm.whatsmyap.core.Labels
 import io.github.filmonm.whatsmyap.core.Rules
+import io.github.filmonm.whatsmyap.data.Images
 import io.github.filmonm.whatsmyap.data.SpeedTest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,6 +57,9 @@ import kotlinx.coroutines.launch
 val Good = Color(0xFF0CA30C)
 val Warn = Color(0xFFB27A00)
 val Bad = Color(0xFFD03B3B)
+
+/** "1 photo", "2 photos". */
+fun count(n: Int, word: String) = "$n $word" + if (n == 1) "" else "s"
 
 fun statusColor(s: Rules.Status?) = when (s) {
     Rules.Status.PASS -> Good
@@ -125,7 +129,7 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                     } else {
                         val st = s.surveyStats
                         Text("Survey: ${s.survey}", fontWeight = FontWeight.SemiBold)
-                        if (st != null) Text("${st.checks} checks · ${st.aps} APs · ${st.tests} speed tests · ${st.photos} photos",
+                        if (st != null) Text(listOf(count(st.checks, "check"), count(st.aps, "AP"), count(st.tests, "speed test"), count(st.photos, "photo")).joinToString(" \u00b7 "),
                             style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = { share(finish = true) }) { Text("Finish & send") }
@@ -243,7 +247,7 @@ private fun PhotoCard(vm: FieldViewModel, s: FieldState) {
         Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val thumb = remember(p.file) {
                 runCatching {
-                    BitmapFactory.decodeFile(p.file.path, BitmapFactory.Options().apply { inSampleSize = 8 })?.asImageBitmap()
+                    Images.thumbnail(p.file)?.asImageBitmap()
                 }.getOrNull()
             }
             thumb?.let { Image(it, contentDescription = "Label photo", contentScale = ContentScale.Crop, modifier = Modifier.size(96.dp)) }

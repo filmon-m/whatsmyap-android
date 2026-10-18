@@ -181,7 +181,8 @@ class Survey(private val context: Context) {
             "Started:   ${started ?: rows.firstOrNull()?.get("timestamp") ?: "?"}",
             "Packaged:  ${Storage.timestamp()}",
             "App:       What's My AP ${BuildConfig.VERSION_NAME} (Android)",
-            "Contents:  ${st.checks} checks, ${st.aps} APs, ${st.tests} speed tests, ${st.photos} photos",
+            "Contents:  " + listOf(st.checks to "check", st.aps to "AP", st.tests to "speed test", st.photos to "photo")
+                .joinToString(", ") { (n, w) -> "$n $w" + if (n == 1) "" else "s" },
             "Zip files: $n" + if (n > 1) "  - unzip ALL $n parts into the same place, then open report.html" else "",
             "",
             "Open report.html in a browser to review. photos/ are review-size copies; the",

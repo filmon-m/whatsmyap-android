@@ -317,7 +317,7 @@ function photoCard(r) {
         : `${r.label === "VERIFIED" ? "✓✓" : ["MISMATCH", "CONFLICT"].includes(r.label) ? "✕" : "✓"} OCR: ${r.ocr_label}${r.label ? " · " + LABEL_TEXT[r.label] : ""}`)
       : r.label_entered ? el("span", {}, `label #${r.label_entered} (typed)`) : null);
 }
-function modName(r) { return { testmyap: "test", debugmyap: "health" }[r.module] || "inspect"; }
+function modName(r) { return { testmyap: "test", debugmyap: "health", fieldsurvey: "field" }[r.module] || "inspect"; }
 function fmtMbps(m) { return m == null ? "?" : m >= 1000 ? (m / 1000) + " Gbps" : m + " Mbps"; }
 function fmtWhen(d) {
   if (!d) return "";
@@ -403,7 +403,7 @@ function checkCard(r) {
   if (!b.length) b.push(badge("", r.speed_error ? "speed test failed" : r.error || "looked up", null));
   return el("a", { class: "card", href: "#/ap/" + encodeURIComponent(r.key) },
     el("div", { class: "top" }, el("span", { class: "name" }, r.apName), el("span", { class: "meta" }, fmtWhen(r.ts))),
-    el("div", { class: "meta" }, [siteLabel(r.site, r.site_type), r.ssid, { testmyap: "speed test (no WLC)", debugmyap: "AP health" }[r.module] || "inspect"].filter(Boolean).join(" · ")),
+    el("div", { class: "meta" }, [siteLabel(r.site, r.site_type), r.ssid, { testmyap: "speed test (no WLC)", debugmyap: "AP health", fieldsurvey: "field survey" }[r.module] || "inspect"].filter(Boolean).join(" · ")),
     el("div", { class: "badges" }, b));
 }
 

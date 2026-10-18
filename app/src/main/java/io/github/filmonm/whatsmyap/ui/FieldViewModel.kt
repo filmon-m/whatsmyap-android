@@ -143,6 +143,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(readingLabel = true) }
         viewModelScope.launch {
             val sha = withContext(Dispatchers.IO) { Storage.sha256(file) }
+            val takenAt = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()   // before any rename
             val ocr = runCatching { LabelReader.readFile(ctx, file, _state.value.tag) }.getOrNull()
             var f = file
             val n = _state.value.tag ?: ocr?.number
@@ -150,7 +151,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
                 val renamed = File(file.parentFile, file.nameWithoutExtension.substringBefore("_AP") + "_AP$n.jpg")
                 if (!renamed.exists() && file.renameTo(renamed)) f = renamed
             }
-            val photo = Photo(f, sha, Storage.timestamp(Date(file.lastModified())), wifi?.apKey.orEmpty(), ocr, ocrRan = true)
+            val photo = Photo(f, sha, Storage.timestamp(Date(takenAt)), wifi?.apKey.orEmpty(), ocr, ocrRan = true)
             _state.update { it.copy(photo = photo, readingLabel = false) }
             log(photo.columns(), wifiAt = wifi)
         }
