@@ -38,6 +38,12 @@ data class SpeedResult(
     val aborted: Boolean = false,
     /** Every server tried, in order, with its outcome: "cloudflare: HTTP 403", "vultr-lax: ok". */
     val attempts: List<String> = emptyList(),
+    /** Retransmitted bytes as % of sent (ndt7 only: the server's TCP view). */
+    val retransPct: Double? = null,
+    /** "internet" or "local" (the site's test server, e.g. the Pi in the MDF). */
+    val target: String = "internet",
+    /** Teams readiness over UDP to a Microsoft media relay (internet tests only). */
+    val teams: TeamsProbe.Result? = null,
 ) {
     val ok get() = avg != null
 }
@@ -81,17 +87,80 @@ class SpeedTest(private val context: Context) {
     private val prefs = context.getSharedPreferences("speedtest", Context.MODE_PRIVATE)
 
     /** Cloudflare first; if it fails, the fallback servers in order, skipping any used in the last minute. */
-    suspend fun run(progress: (SpeedProgress) -> Unit): SpeedResult = withContext(Dispatchers.IO) {
+    enum class Target { INTERNET, LOCAL }
+
+    /**
+     * INTERNET: the Teams check (UDP to a Microsoft relay), then throughput from the engines in
+     *           Settings order (default M-Lab, then Vultr, then Cloudflare).
+     * LOCAL:    throughput to the site's own ndt7 server (Settings > local test server).
+     */
+    suspend fun run(target: Target, progress: (SpeedProgress) -> Unit): SpeedResult = withContext(Dispatchers.IO) {
+        val settings = Settings(context)
         http.connectionPool.evictAll()            // fresh connections every test: no stale keep-alives
         val attempts = mutableListOf<String>()
         fun note(r: SpeedResult) = attempts.add("${r.site}: " + if (r.ok) "ok" else (r.error ?: "failed"))
-        val cf = runCatching { cloudflare(progress) }.getOrElse { e ->
+        fun guarded(site: String, e: Throwable): SpeedResult {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            SpeedResult(site = "cloudflare", error = e.message ?: e.javaClass.simpleName)
+            return SpeedResult(site = site, error = e.message ?: e.javaClass.simpleName)
         }
-        note(cf)
-        if (cf.ok || cf.aborted) return@withContext cf.copy(attempts = attempts)
-        var last = cf
+
+        if (target == Target.LOCAL) {
+            val hp = settings.localHostPort()
+                ?: return@withContext SpeedResult(site = "local", target = "local", error = "no local test server set (Settings)")
+            val r = runCatching { ndt7(Ndt7().local(hp), "local $hp", progress) }.getOrElse { guarded("local $hp", it) }
+            note(r)
+            return@withContext r.copy(attempts = attempts, target = "local")
+        }
+
+        progress(SpeedProgress("Teams check: UDP to the Microsoft relay", 0f))
+        val teams = runCatching {
+            TeamsProbe.run(settings.teamsRelay, Settings.TEAMS_PROBE_SECONDS) { f ->
+                progress(SpeedProgress("Teams check: UDP to the Microsoft relay", f))
+            }
+        }.getOrElse { e ->
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            TeamsProbe.Result(settings.teamsRelay, 0, 0, null, null, null, e.message ?: "failed")
+        }
+
+        var last: SpeedResult? = null
+        for (engine in settings.internetOrder) {
+            if (attempts.isNotEmpty()) progress(SpeedProgress("${attempts.last()} - trying $engine", 0f))
+            val r = when (engine) {
+                "mlab" -> runCatching { ndt7(Ndt7().locate(), "mlab", progress) }.getOrElse { guarded("mlab", it) }
+                "cloudflare" -> runCatching { cloudflare(progress) }.getOrElse { guarded("cloudflare", it) }
+                else -> vultr(progress, ::note)
+            }
+            if (engine != "vultr") note(r)
+            last = r
+            if (r.ok || r.aborted) break
+        }
+        (last ?: SpeedResult(error = "no test engine configured")).copy(attempts = attempts, teams = teams)
+    }
+
+    /** One ndt7 test (M-Lab or local): download, then upload. */
+    private suspend fun ndt7(server: Ndt7.Server, site: String, progress: (SpeedProgress) -> Unit): SpeedResult {
+        val ndt = Ndt7()
+        val label = if (site == "mlab") "M-Lab ${server.name}" else site
+        val down = ndt.download(server.download) { f, mbps -> progress(SpeedProgress("Download ($label)", f, mbps)) }
+        if (down.error != null && down.bytes == 0L) {
+            return SpeedResult(site = site, colo = server.name, error = down.error)
+        }
+        val up = ndt.upload(server.upload) { f -> progress(SpeedProgress("Upload ($label)", f)) }
+        val avg = if (down.samples.isNotEmpty()) down.samples.average()
+            else if (down.secs > 0 && down.bytes > 0) down.bytes * 8 / down.secs / 1e6 else null
+        return SpeedResult(
+            min = down.samples.minOrNull() ?: avg, avg = avg, max = down.samples.maxOrNull() ?: avg,
+            mb = down.bytes / 1e6, secs = down.secs,
+            upMbps = if (up.bytes > 0 && up.secs > 0) up.bytes * 8 / up.secs / 1e6 else null,
+            latencyMs = down.minRttMs, loadedLatencyMs = down.rttMs, retransPct = down.retransPct,
+            site = site, colo = server.name,
+            error = if (avg == null) "no data received" else null,
+        )
+    }
+
+    /** The Vultr single-file servers in order, skipping any used in the last minute. */
+    private suspend fun vultr(progress: (SpeedProgress) -> Unit, note: (SpeedResult) -> Boolean): SpeedResult {
+        var last = SpeedResult(site = "vultr", error = "not run")
         val pending = FALLBACKS.toMutableList()
         var retried = false
         while (pending.isNotEmpty()) {
@@ -99,21 +168,20 @@ class SpeedTest(private val context: Context) {
             val url = ready ?: pending.minBy { cooldown(it) }
             if (ready == null) {
                 while (cooldown(url) > 0) {
-                    progress(SpeedProgress("All servers used in the last minute - ${Rules.siteName(url)} in ${cooldown(url)} s", 0f))
+                    progress(SpeedProgress("All Vultr servers used in the last minute - ${Rules.siteName(url)} in ${cooldown(url)} s", 0f))
                     delay(1000)
                 }
             }
-            progress(SpeedProgress("${attempts.last()} - trying ${Rules.siteName(url)}", 0f))
             last = urlTest(url, progress)
             note(last)
-            if (last.ok || last.aborted) return@withContext last.copy(attempts = attempts)
+            if (last.ok || last.aborted) return last
             pending.remove(url)
             if (pending.isEmpty() && last.rateLimited && !retried) {
                 retried = true
                 pending.add(url)
             }
         }
-        last.copy(attempts = attempts)
+        return last
     }
 
     fun cooldown(url: String): Int {

@@ -13,6 +13,7 @@ import io.github.filmonm.whatsmyap.data.Photo
 import io.github.filmonm.whatsmyap.data.Place
 import io.github.filmonm.whatsmyap.data.SpeedProgress
 import io.github.filmonm.whatsmyap.data.SpeedResult
+import io.github.filmonm.whatsmyap.data.Settings
 import io.github.filmonm.whatsmyap.data.SpeedTest
 import io.github.filmonm.whatsmyap.data.Storage
 import io.github.filmonm.whatsmyap.data.Survey
@@ -32,7 +33,14 @@ import java.util.UUID
 /** One speed result, tied to the radio it was measured on. */
 data class Speed(val result: SpeedResult, val bssid: String, val band: String, val roamed: Boolean) {
     val status get() = Rules.speedStatus(result.min, result.avg, band)
-    val teams get() = Rules.teams(result.latencyMs, result.jitterMs)
+    private val probe get() = result.teams?.takeIf { it.ok }
+    /** Teams verdict: from the UDP relay probe when it answered, else estimated from the TCP test. */
+    val teams get() = probe?.let { Rules.teams(it.rttMs, it.jitterMs, it.lossPct) } ?: Rules.teams(result.latencyMs, result.jitterMs)
+    val teamsSource get() = when {
+        probe != null -> "udp-relay"
+        result.latencyMs != null && result.jitterMs != null -> "tcp-estimate"
+        else -> null
+    }
 }
 
 data class FieldState(
@@ -59,7 +67,18 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<FieldState> = _state
     private var testJob: Job? = null
 
-    init { refreshSurvey() }
+    val settings = Settings(app)
+
+    init {
+        settings.apply()
+        refreshSurvey()
+    }
+
+    /** After the Settings screen saves. */
+    fun settingsChanged() {
+        settings.apply()
+        _state.update { it.copy(speed = it.speed?.copy()) }     // re-grade what's on screen
+    }
 
     // ------------------------------------------------------------------ reads
     fun refreshWifi() {
@@ -98,13 +117,13 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         s.speed?.takeIf { sp -> s.wifi?.bssid == sp.bssid }
 
     // ------------------------------------------------------------------ actions
-    fun runSpeedTest() {
+    fun runSpeedTest(target: SpeedTest.Target = SpeedTest.Target.INTERNET) {
         val wifi = _state.value.wifi ?: return
         if (testJob?.isActive == true) return
         testJob = viewModelScope.launch {
             _state.update { it.copy(testing = SpeedProgress("Starting", 0f), message = null) }
             try {
-                val r = speedTest.run { p -> _state.update { it.copy(testing = p) } }
+                val r = speedTest.run(target) { p -> _state.update { it.copy(testing = p) } }
                 refreshWifi()
                 val after = _state.value.wifi?.bssid
                 val sp = Speed(r, wifi.bssid, wifi.band, roamed = after != null && after != wifi.bssid)
@@ -175,7 +194,11 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "speed_up_mbps" to r.upMbps, "latency_ms" to r.latencyMs, "latency_loaded_ms" to r.loadedLatencyMs,
             "jitter_ms" to r.jitterMs,
             "speed_attempts" to r.attempts.joinToString(" \u2192 ").ifBlank { null },
+            "speed_target" to r.target, "speed_retrans_pct" to r.retransPct,
             "teams_status" to teams?.let { if (it.pass) "PASS" else "FAIL" }, "teams_note" to teams?.why?.ifBlank { null },
+            "teams_source" to sp.teamsSource,
+            "teams_rtt_ms" to r.teams?.rttMs, "teams_jitter_ms" to r.teams?.jitterMs, "teams_loss_pct" to r.teams?.lossPct,
+            "teams_sent" to r.teams?.sent?.takeIf { it > 0 }, "teams_relay" to r.teams?.relay, "teams_error" to r.teams?.error,
         )
     }
 

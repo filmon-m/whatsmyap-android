@@ -58,6 +58,8 @@ class RulesTest {
     @Test fun teamsCheck() {
         assertTrue(Rules.teams(22.0, 4.0)!!.pass)
         assertEquals("jitter 66 > 30 ms", Rules.teams(40.0, 66.0)!!.why)
+        assertEquals("RTT 120 > 100 ms, loss 2.5% > 1%", Rules.teams(120.0, 4.0, 2.5)!!.why)
+        assertTrue(Rules.teams(40.0, 4.0, 0.4)!!.pass)
         assertNull(Rules.teams(null, 4.0))
     }
 

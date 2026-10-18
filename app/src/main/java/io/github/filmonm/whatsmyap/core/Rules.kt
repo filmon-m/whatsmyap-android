@@ -37,20 +37,26 @@ object Rules {
         }
     }
 
-    var teamsRttMs = 150.0
+    // Microsoft's client -> Microsoft edge targets; Settings can change them
+    var teamsRttMs = 100.0
     var teamsJitterMs = 30.0
+    var teamsLossPct = 1.0
 
     data class Teams(val pass: Boolean, val why: String)
 
-    /** Microsoft Teams check: round trip AND jitter within limits. Null without latency figures. */
-    fun teams(rttMs: Double?, jitterMs: Double?): Teams? {
+    /** Microsoft Teams check: round trip, jitter and (when measured) packet loss within limits.
+     *  Null without latency figures. */
+    fun teams(rttMs: Double?, jitterMs: Double?, lossPct: Double? = null): Teams? {
         if (rttMs == null || jitterMs == null) return null
         val bad = buildList {
             if (rttMs > teamsRttMs) add("RTT ${rttMs.toInt()} > ${teamsRttMs.toInt()} ms")
             if (jitterMs > teamsJitterMs) add("jitter ${jitterMs.toInt()} > ${teamsJitterMs.toInt()} ms")
+            if (lossPct != null && lossPct > teamsLossPct) add("loss %.1f%% > %s%%".format(java.util.Locale.US, lossPct, fmt(teamsLossPct)))
         }
         return Teams(bad.isEmpty(), bad.joinToString(", "))
     }
+
+    private fun fmt(d: Double) = if (d == d.toLong().toDouble()) d.toLong().toString() else d.toString()
 
     /** Median and jitter (mean change between consecutive samples) of round-trip times. */
     fun latencyStats(samples: List<Double>): Pair<Double, Double>? {
