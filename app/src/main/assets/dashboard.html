@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a1a19">
+<title>What's My AP</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --series: #2a78d6; --series-wash: rgba(42,120,214,0.10); --ref: #898781;
+  --good: #0ca30c; --warn: #fab219; --bad: #d03b3b; --accent: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --series: #3987e5; --series-wash: rgba(57,135,229,0.12); --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --series: #3987e5; --series-wash: rgba(57,135,229,0.12); --accent: #3987e5;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--page); color: var(--ink);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { overflow-x: hidden; }
+.wrap { max-width: 820px; margin: 0 auto; padding: 0 16px 48px; }
+header { position: sticky; top: 0; z-index: 5; background: var(--page);
+  border-bottom: 1px solid var(--ring); }
+header .wrap { display: flex; align-items: center; gap: 12px; padding-top: 12px; padding-bottom: 8px;
+  flex-wrap: wrap; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+.live { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; }
+.live.off i { background: var(--muted); }
+nav { display: flex; gap: 4px; margin-left: auto; }
+nav a { padding: 8px 14px; border-radius: 999px; text-decoration: none; color: var(--ink2);
+  font-weight: 600; font-size: 15px; }
+nav a.on { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--ring); }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 0 4px; }
+select, input[type=search] { font: inherit; font-size: 15px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--ring); border-radius: 10px; padding: 8px 10px; min-height: 44px; }
+input[type=search] { flex: 1 1 160px; min-width: 0; }
+label.chk { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink2); min-height: 44px; }
+label.chk input { width: 20px; height: 20px; }
+h2 { font-size: 15px; font-weight: 650; color: var(--ink2); margin: 24px 0 8px; text-transform: none; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+@media (min-width: 700px) { .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border-radius: 14px; padding: 14px; box-shadow: 0 0 0 1px var(--ring); }
+.tile .lab { font-size: 13px; color: var(--ink2); }
+.tile .val { font-size: 30px; font-weight: 650; margin-top: 2px; display: flex; align-items: center; gap: 8px; }
+.tile .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.card { background: var(--surface); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+  box-shadow: 0 0 0 1px var(--ring); display: block; color: inherit; text-decoration: none; }
+a.card:active { background: var(--grid); }
+.card .top { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; }
+.card .name { font-weight: 650; font-size: 17px; overflow-wrap: anywhere; }
+.card .meta { font-size: 13px; color: var(--muted); }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 10px 4px 6px;
+  border-radius: 999px; background: var(--page); box-shadow: 0 0 0 1px var(--ring); color: var(--ink); }
+.badge .ic { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 12px; font-weight: 800; color: #fff; flex: none; }
+.ic.good { background: var(--good); } .ic.warn { background: var(--warn); color: #0b0b0b; }
+.ic.bad { background: var(--bad); } .ic.none { background: var(--axis); color: var(--ink2); }
+.badge .k { color: var(--ink2); }
+.empty { color: var(--muted); padding: 16px 0; }
+.back { display: inline-block; margin: 12px 0 0; color: var(--accent); text-decoration: none; font-weight: 600;
+  min-height: 44px; line-height: 44px; }
+.title { font-size: 24px; font-weight: 650; margin: 4px 0 2px; overflow-wrap: anywhere; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 14px; margin-top: 8px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+.chart { background: var(--surface); border-radius: 14px; box-shadow: 0 0 0 1px var(--ring);
+  padding: 12px 12px 4px; position: relative; margin-bottom: 10px; }
+.chart .ct { font-weight: 650; font-size: 15px; }
+.chart .cs { font-size: 13px; color: var(--muted); }
+.chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ring), 0 4px 16px rgba(0,0,0,.18); border-radius: 10px; padding: 8px 10px;
+  font-size: 13px; min-width: 120px; display: none; z-index: 3; }
+.tip b { font-size: 15px; display: block; }
+.tip span { color: var(--ink2); }
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.photo { display: block; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px var(--ring); color: var(--muted); text-decoration: none; font-size: 12px; }
+.photo img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--grid); }
+.photo span { display: block; padding: 6px 8px; }
+.photo span.ocr { padding-top: 0; font-weight: 600; }
+.photo span.ocr.good { color: var(--good, #1a7f37); } .photo span.ocr.bad { color: var(--bad, #c62828); } .photo span.ocr.warn { color: var(--ink2); }
+.hash { font-size: 12px; color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+.tablewrap { overflow-x: auto; background: var(--surface); border-radius: 14px; box-shadow: 0 0 0 1px var(--ring); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { color: var(--ink2); font-weight: 600; font-size: 13px; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.picker { background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 24px;
+  box-shadow: 0 0 0 1px var(--ring); }
+.picker input { margin-top: 12px; font-size: 16px; }
+.note { font-size: 13px; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>What's My AP</h1>
+  <span class="live off" id="live"><i></i><span id="livetxt">loading</span></span>
+  <nav><a href="#/today" id="nav-today">Overview</a><a href="#/aps" id="nav-aps">APs</a><a href="#/wlcs" id="nav-wlcs">WLCs</a></nav>
+</div></header>
+<main class="wrap" id="main"></main>
+<script>
+"use strict";
+// ---------------------------------------------------------------- state
+const Q = new URLSearchParams(location.search);
+const TOKEN = Q.get("t");
+const SERVED = location.protocol.startsWith("http") && !!TOKEN;
+const S = {
+  rows: [], stamp: "", thresholds: {"2.4": 25, "5": 100, "6": 100},
+  // same defaults as settings.ini; replaced by the app's own values when served live
+  limits: {
+    wlchealth: { aps_down_warn_pct: 2, aps_down_fail_pct: 10, cpu_warn_pct: 70, cpu_fail_pct: 90,
+      mem_warn_pct: 80, mem_fail_pct: 90, uptime_warn_hours: 24 },
+    aphealth: { util_warn_pct: 50 },
+    teams: { rtt_ms: 150, jitter_ms: 30 },
+  },
+  range: load("range", "7"), site: load("site", ""), archive: load("archive", "0") === "1", q: "",
+};
+const EMBED = window.EMBED || null;      // survey report: data built into the page
+if (EMBED) { S.range = "all"; S.site = ""; }
+function load(k, d) { try { return localStorage.getItem("wma_" + k) ?? d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem("wma_" + k, v); } catch (e) {} }
+
+// ---------------------------------------------------------------- dom helpers (text only, never innerHTML)
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs, ...kids) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+  for (const c of kids.flat()) if (c != null) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return n;
+}
+
+// ---------------------------------------------------------------- data
+function num(v) { const n = parseFloat(v); return Number.isFinite(n) ? n : null; }
+function parseTs(s) { const d = new Date(String(s || "").replace(" ", "T")); return isNaN(d) ? null : d; }
+
+function normalize(r) {
+  const o = Object.assign({}, r);
+  o.ts = parseTs(r.timestamp);
+  o.speedAvg = num(r.speed_avg_mbps); o.speedMin = num(r.speed_min_mbps); o.speedMax = num(r.speed_max_mbps);
+  o.up = num(r.speed_up_mbps); o.lat = num(r.latency_ms); o.latLoaded = num(r.latency_loaded_ms); o.jitter = num(r.jitter_ms);
+  o.rssi = num(r.rssi_tablet_dbm);
+  // label verdict: VERIFIED (OCR = WLC) / CONFIRMED (typed = WLC) / CONSISTENT (no WLC; OCR = tag)
+  // MISMATCH / CONFLICT / REVIEW (photo, label unreadable). Logs before v2.12 only had typed MATCH/MISMATCH.
+  o.label = ["VERIFIED", "CONFIRMED", "CONSISTENT", "MISMATCH", "CONFLICT"].includes(r.label_verdict) ? r.label_verdict
+    : r.label_result === "MATCH" ? "CONFIRMED" : r.label_result === "MISMATCH" ? "MISMATCH"
+    : r.ocr_label === "UNREADABLE" ? "REVIEW" : null;
+  o.labelNum = r.ocr_number || r.label_entered || r.ap_number || "";
+  const mbps = num(r.link_mbps);
+  if (r.link_status === "DOWN") o.link = "FAIL";
+  else if (mbps != null) o.link = mbps >= 1000 && /^full/i.test(r.link_duplex || "") ? "PASS" : "WARN";
+  else o.link = null;
+  o.speed = ["PASS", "WARN", "FAIL"].includes(r.speed_status) ? r.speed_status : null;
+  // Teams: as logged, or worked out from latency + jitter for tests logged before v2.9
+  const tl = S.limits.teams;
+  o.teams = ["PASS", "FAIL"].includes(r.teams_status) ? r.teams_status
+    : o.lat != null && o.jitter != null ? (o.lat <= tl.rtt_ms && o.jitter <= tl.jitter_ms ? "PASS" : "FAIL") : null;
+  o.isWlc = r.module === "debugmywlc";
+  o.city = r.location_city && r.location_city !== "N/A" ? r.location_city : "";
+  o.where = [r.location_name, r.location_address, o.city].filter(Boolean).join(" · ");
+  o.isApHealth = r.module === "debugmyap";
+  o.isRadio = o.isApHealth && !r.ap_status;            // per-radio detail rows of an AP health check
+  o.health = o.isApHealth && ["PASS", "WARN", "FAIL"].includes(r.ap_status) ? r.ap_status : null;
+  const apId = r.ap_name || (r.ap_number ? "AP #" + r.ap_number : "") || (r.bssid ? "Radio " + r.bssid : "unknown AP");
+  o.apName = apId;
+  o.key = [r.site || "", r.site_type || "", apId].join("|");
+  return o;
+}
+
+// A speed test with no AP name inherits the AP an Inspect saw on the same BSSID
+function linkByBssid(rows) {
+  const owner = new Map();
+  for (const r of rows) if (r.ap_name && r.bssid) owner.set(r.bssid.toLowerCase(), r);
+  for (const r of rows) {
+    if (r.ap_name || !r.bssid) continue;
+    const o = owner.get(r.bssid.toLowerCase());
+    if (!o) continue;
+    r.apName = o.ap_name; r.key = o.key;
+    if (!r.site) { r.site = o.site; r.site_type = o.site_type; }
+  }
+  return rows;
+}
+// No controller and no learned site: the place the tablet was becomes the site
+function placeSites(rows) {
+  for (const r of rows) {
+    if (r.site || !r.city) continue;
+    r.site = r.city; r.site_type = ""; r.bySpot = true;
+    r.key = [r.site, "", r.apName].join("|");
+  }
+  return rows;
+}
+function countBy(rows, f) {
+  const m = new Map();
+  for (const r of rows) { const v = f(r); if (v) m.set(v, (m.get(v) || 0) + 1); }
+  return [...m].sort((a, b) => b[1] - a[1]);
+}
+const VENDOR = { cisco9800: "Cisco 9800", aruba8: "Aruba 8.x" };
+
+function siteLabel(site, type) { return site ? (type ? `${site} (${type})` : site) : "unknown site"; }
+
+function inRange(r) {
+  if (S.site && (r.site + "|" + r.site_type) !== S.site) return false;
+  if (S.range === "all" || !r.ts) return true;
+  const now = new Date(), start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (parseInt(S.range, 10) - 1));
+  return r.ts >= start;
+}
+
+function apsFrom(rows) {
+  const m = new Map();
+  for (const r of rows) {
+    let a = m.get(r.key);
+    if (!a) m.set(r.key, a = { key: r.key, name: r.apName, site: r.site, type: r.site_type, rows: [] });
+    a.rows.push(r);
+  }
+  for (const a of m.values()) {
+    a.rows.sort((x, y) => (x.ts || 0) - (y.ts || 0));
+    const latest = f => { for (let i = a.rows.length - 1; i >= 0; i--) { const v = a.rows[i][f]; if (v != null && v !== "") return a.rows[i]; } return null; };
+    a.lastLabel = latest("label"); a.lastLink = latest("link"); a.lastSpeed = latest("speed"); a.lastHealth = latest("health");
+    a.lastTeams = latest("teams");
+    a.last = a.rows[a.rows.length - 1];
+    if (a.name.startsWith("Radio ")) {            // no AP name (speed test only): lead with the building name
+      const spot = [...a.rows].reverse().find(r => r.location_name);
+      if (spot) a.name = `${spot.location_name} · radio ${a.name.slice(6)}`;
+    }
+    a.wlcRow = latest("wlc_name") || {}; a.wlc = a.wlcRow.wlc_name || "";
+    a.apIp = (latest("ap_ip") || {}).ap_ip || ""; a.bssid = (latest("bssid") || {}).bssid || "";
+    a.problems = (["MISMATCH", "CONFLICT"].includes(a.lastLabel?.label) ? 3 : a.lastLabel?.label === "REVIEW" ? 1 : 0) + (a.lastLink?.link === "FAIL" ? 3 : a.lastLink?.link === "WARN" ? 2 : 0)
+      + (a.lastSpeed?.speed === "FAIL" ? 2 : a.lastSpeed?.speed === "WARN" ? 1 : 0)
+      + (a.lastHealth?.health === "FAIL" ? 2 : a.lastHealth?.health === "WARN" ? 1 : 0)
+      + (a.lastTeams?.teams === "FAIL" ? 1 : 0);
+  }
+  return [...m.values()];
+}
+
+// ---------------------------------------------------------------- badges
+const ICON = { good: "✓", warn: "!", bad: "✕", none: "–" };
+function tone(s) {
+  return ["PASS", "MATCH", "VERIFIED", "CONFIRMED", "CONSISTENT"].includes(s) ? "good"
+    : s === "WARN" || s === "REVIEW" ? "warn" : ["FAIL", "MISMATCH", "CONFLICT"].includes(s) ? "bad" : "none";
+}
+const LABEL_TEXT = { VERIFIED: "verified by OCR", CONFIRMED: "typed, matches", CONSISTENT: "read = tag",
+  MISMATCH: "mismatch", CONFLICT: "OCR \u2260 typed", REVIEW: "unreadable" };
+function labelBadge(r) {
+  const n = v => "#" + parseInt(v, 10);
+  if (r.label === "REVIEW") return badge("Label", "unreadable - check photo", r.label);
+  if (r.label === "MISMATCH" && r.ap_number) return badge("Label", `reads ${n(r.ocr_number || r.label_entered)} \u00b7 WLC ${n(r.ap_number)}`, r.label);
+  if (r.label === "CONFLICT") return badge("Label", `OCR ${n(r.ocr_number)} \u00b7 typed ${n(r.label_entered)}`, r.label);
+  return badge("Label", `${r.labelNum ? n(r.labelNum) + " " : ""}${LABEL_TEXT[r.label]}`, r.label);
+}
+function badge(k, text, status) {
+  const t = tone(status);
+  return el("span", { class: "badge", title: status || "" },
+    el("span", { class: "ic " + t, "aria-hidden": "true" }, ICON[t]), el("span", { class: "k" }, k), text);
+}
+function badgesFor(a) {
+  const out = [];
+  if (a.lastLabel) out.push(labelBadge(a.lastLabel));
+  if (a.lastLink) out.push(badge("Link", a.lastLink.link_status === "DOWN" ? "down" : `${fmtMbps(num(a.lastLink.link_mbps))} ${(a.lastLink.link_duplex || "").toLowerCase()}`, a.lastLink.link));
+  if (a.lastSpeed) out.push(badge("Speed", `${Math.round(a.lastSpeed.speedAvg)} Mbps`, a.lastSpeed.speed));
+  if (a.rows.some(r => r.photo_file)) out.push(badge("Photo", "on file", "PASS"));
+  if (a.lastTeams) out.push(teamsBadge(a.lastTeams));
+  if (a.lastHealth) out.push(healthBadge(a.lastHealth));
+  if (!out.length) out.push(badge("", "no checks with results", null));
+  return out;
+}
+function healthBadge(r) {
+  const n = num(r.ap_issues);
+  return badge("Health", n ? `${n} to check` : "ok", r.health);
+}
+function teamsBadge(r) {
+  const why = r.teams_note || (r.teams === "FAIL" ? `RTT ${Math.round(r.lat)} ms, jitter ${Math.round(r.jitter)} ms` : "");
+  const b = badge("Teams", r.teams === "PASS" ? "ok" : "not ok", r.teams);
+  b.title = r.teams === "PASS" ? `RTT ${Math.round(r.lat)} ms, jitter ${Math.round(r.jitter)} ms` : why;
+  return b;
+}
+function photoUrl(r) {
+  if (!r.photo_file) return "";
+  const month = (r.photo_taken || r.timestamp || "").slice(0, 7);
+  if (EMBED) return `${EMBED.photoDir}/${encodeURIComponent(r.photo_file)}`;
+  const rel = `photos/${month}/${encodeURIComponent(r.photo_file)}`;
+  return SERVED ? `/${rel}?t=${encodeURIComponent(TOKEN)}` : rel;   // offline: next to dashboard.html
+}
+function photoCard(r) {
+  const url = photoUrl(r);
+  return el("a", { class: "photo", href: url, target: "_blank", rel: "noopener" },
+    el("img", { src: url, alt: `Label photo, ${r.apName}`, loading: "lazy" }),
+    el("span", {}, fmtWhen(parseTs(r.photo_taken) || r.ts)),
+    r.ocr_label ? el("span", { class: "ocr " + tone(r.label || (r.ocr_label === "UNREADABLE" ? "REVIEW" : "")) },
+      r.ocr_label === "UNREADABLE" ? "? OCR: unreadable - check photo"
+        : `${r.label === "VERIFIED" ? "✓✓" : ["MISMATCH", "CONFLICT"].includes(r.label) ? "✕" : "✓"} OCR: ${r.ocr_label}${r.label ? " · " + LABEL_TEXT[r.label] : ""}`)
+      : r.label_entered ? el("span", {}, `label #${r.label_entered} (typed)`) : null);
+}
+function modName(r) { return { testmyap: "test", debugmyap: "health" }[r.module] || "inspect"; }
+function fmtMbps(m) { return m == null ? "?" : m >= 1000 ? (m / 1000) + " Gbps" : m + " Mbps"; }
+function fmtWhen(d) {
+  if (!d) return "";
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const t = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return d >= today ? `today ${t}` : `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${t}`;
+}
+
+// ---------------------------------------------------------------- filters
+function filters(showSearch) {
+  const sites = new Map();
+  for (const r of S.rows) if (r.site) sites.set(r.site + "|" + r.site_type, siteLabel(r.site, r.site_type));
+  const range = el("select", { "aria-label": "Date range", onchange: e => { S.range = e.target.value; save("range", S.range); render(); } },
+    ...[["1", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"], ["all", "All time"]]
+      .map(([v, t]) => el("option", { value: v, selected: S.range === v ? "" : null }, t)));
+  const site = el("select", { "aria-label": "Site", onchange: e => { S.site = e.target.value; save("site", S.site); render(); } },
+    el("option", { value: "" }, "All sites"),
+    ...[...sites].sort((a, b) => a[1].localeCompare(b[1])).map(([v, t]) => el("option", { value: v, selected: S.site === v ? "" : null }, t)));
+  const kids = [range, site];
+  if (showSearch) {
+    const s = el("input", { type: "search", placeholder: "AP number or name", value: S.q, "aria-label": "Search APs",
+      oninput: e => { S.q = e.target.value; renderList(); } });
+    kids.push(s);
+  }
+  if (SERVED) kids.push(el("label", { class: "chk" }, el("input", { type: "checkbox", checked: S.archive ? "" : null,
+    onchange: e => { S.archive = e.target.checked; save("archive", S.archive ? "1" : "0"); fetchRows(true); } }), "Include archive"));
+  return el("div", { class: "filters" }, kids);
+}
+
+// ---------------------------------------------------------------- views
+const main = document.getElementById("main");
+
+function apRows() { return S.rows.filter(r => !r.isWlc && !r.isRadio); }
+
+function viewToday() {
+  const rows = apRows().filter(inRange);
+  const aps = apsFrom(rows);
+  const labeled = aps.filter(a => a.lastLabel);
+  const lab = k => labeled.filter(a => k.includes(a.lastLabel.label)).length;
+  const lOk = lab(["VERIFIED", "CONFIRMED", "CONSISTENT"]), lBad = lab(["MISMATCH", "CONFLICT"]), lRev = lab(["REVIEW"]);
+  const linked = aps.filter(a => a.lastLink), slow = linked.filter(a => a.lastLink.link !== "PASS");
+  const tests = rows.filter(r => r.speed), passed = tests.filter(r => r.speed === "PASS");
+  const tt = rows.filter(r => r.teams), tok = tt.filter(r => r.teams === "PASS");
+  const tile = (lab, val, sub, status) => el("div", { class: "tile" }, el("div", { class: "lab" }, lab),
+    el("div", { class: "val" }, status ? el("span", { class: "ic " + tone(status), style: "width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff" }, ICON[tone(status)]) : null, String(val)),
+    el("div", { class: "sub" }, sub));
+  main.append(filters(false), el("div", { class: "tiles" },
+    tile("APs checked", aps.length, `${rows.length} check${rows.length === 1 ? "" : "s"}`),
+    tile("Labels verified", labeled.length ? `${lOk}/${labeled.length}` : "–",
+      labeled.length ? [`${lab(["VERIFIED"])} by OCR · ${lab(["CONFIRMED"])} by tester`, lBad ? `${lBad} mismatch${lBad > 1 ? "es" : ""}` : "", lRev ? `${lRev} to review` : ""].filter(Boolean).join(" · ") : "no labels checked",
+      labeled.length ? (lBad ? "FAIL" : lRev ? "WARN" : "PASS") : null),
+    tile("Slow or down links", slow.length, `of ${linked.length} checked`, linked.length ? (slow.length ? "WARN" : "PASS") : null),
+    tile("Speed tests passed", tests.length ? `${passed.length}/${tests.length}` : "–", tests.length ? `${Math.round(100 * passed.length / tests.length)}%` : "no tests", tests.length ? (passed.length === tests.length ? "PASS" : "WARN") : null),
+    tile("Teams ready", tt.length ? `${tok.length}/${tt.length}` : "–", tt.length ? `RTT ≤ ${S.limits.teams.rtt_ms} ms, jitter ≤ ${S.limits.teams.jitter_ms} ms` : "no tests with latency", tt.length ? (tok.length === tt.length ? "PASS" : "FAIL") : null)));
+  const bad = aps.filter(a => a.problems).sort((a, b) => b.problems - a.problems);
+  main.append(el("h2", {}, "Needs attention"));
+  main.append(bad.length ? el("div", {}, bad.map(apCard)) : el("div", { class: "empty" }, "Nothing flagged in this range."));
+  const wl = wlcsFrom(S.rows.filter(r => r.isWlc && r.wlc_status && inRange(r)));
+  if (wl.length) { main.append(el("h2", {}, "Controllers")); main.append(el("div", {}, wl.map(wlcCard))); }
+  main.append(el("h2", {}, "Latest checks"));
+  const latest = [...rows].sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 12);
+  main.append(latest.length ? el("div", {}, latest.map(checkCard)) : el("div", { class: "empty" }, "No checks in this range."));
+}
+
+function apCard(a) {
+  return el("a", { class: "card", href: "#/ap/" + encodeURIComponent(a.key) },
+    el("div", { class: "top" }, el("span", { class: "name" }, a.name), el("span", { class: "meta" }, fmtWhen(a.last.ts))),
+    el("div", { class: "meta" }, [siteLabel(a.site, a.type), a.wlc || (countBy(a.rows, r => r.ssid)[0] || [])[0],
+      `${a.rows.length} check${a.rows.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")),
+    el("div", { class: "badges" }, badgesFor(a)));
+}
+
+function checkCard(r) {
+  const b = [];
+  if (r.label) b.push(labelBadge(r));
+  if (r.link) b.push(badge("Link", r.link_status === "DOWN" ? "down" : fmtMbps(num(r.link_mbps)), r.link));
+  if (r.speed) b.push(badge("Speed", `${Math.round(r.speedAvg)} Mbps`, r.speed));
+  if (r.up != null) b.push(badge("Up", `${Math.round(r.up)} Mbps`, null));
+  if (r.lat != null) b.push(badge("Latency", `${Math.round(r.lat)} ms`, null));
+  if (r.teams) b.push(teamsBadge(r));
+  if (r.health) b.push(healthBadge(r));
+  if (r.isApHealth && r.ap_clients) b.push(badge("Clients", r.ap_clients, null));
+  if (!b.length) b.push(badge("", r.speed_error ? "speed test failed" : r.error || "looked up", null));
+  return el("a", { class: "card", href: "#/ap/" + encodeURIComponent(r.key) },
+    el("div", { class: "top" }, el("span", { class: "name" }, r.apName), el("span", { class: "meta" }, fmtWhen(r.ts))),
+    el("div", { class: "meta" }, [siteLabel(r.site, r.site_type), r.ssid, { testmyap: "speed test (no WLC)", debugmyap: "AP health" }[r.module] || "inspect"].filter(Boolean).join(" · ")),
+    el("div", { class: "badges" }, b));
+}
+
+let listBox = null;
+function viewAps() {
+  main.append(filters(true));
+  listBox = el("div", {});
+  main.append(listBox);
+  renderList();
+}
+function renderList() {
+  if (!listBox) return;
+  listBox.replaceChildren();
+  let aps = apsFrom(apRows().filter(inRange));
+  const q = S.q.trim().toLowerCase();
+  if (q) {
+    const n = q.replace(/^ap[\s_#-]*/, "");
+    aps = aps.filter(a => a.name.toLowerCase().includes(q) ||
+      (/^\d+$/.test(n) && a.rows.some(r => String(parseInt(r.ap_number, 10)) === String(parseInt(n, 10)))));
+  }
+  aps.sort((a, b) => b.problems - a.problems || a.name.localeCompare(b.name, undefined, { numeric: true }));
+  listBox.append(el("h2", {}, `${aps.length} AP${aps.length === 1 ? "" : "s"}`));
+  listBox.append(aps.length ? el("div", {}, aps.map(apCard)) : el("div", { class: "empty" }, "No APs match."));
+}
+
+function viewAp(key) {
+  const a = apsFrom(apRows().filter(r => r.key === key))[0];
+  main.append(el("a", { class: "back", href: "#/aps" }, "‹ All APs"));
+  if (!a) { main.append(el("div", { class: "empty" }, "No checks for this AP.")); return; }
+  const last = a.last;
+  main.append(el("div", { class: "title" }, a.name),
+    el("dl", { class: "kv" },
+      el("dt", {}, "Site"), el("dd", {}, siteLabel(a.site, a.type)),
+      a.wlc ? [el("dt", {}, "WLC"), el("dd", {}, `${a.wlc}${a.wlcRow.wlc_vendor ? " (" + (VENDOR[a.wlcRow.wlc_vendor] || a.wlcRow.wlc_vendor) + ")" : ""}`)] : null,
+      a.apIp ? [el("dt", {}, "AP IP"), el("dd", {}, a.apIp)] : null,
+      a.bssid ? [el("dt", {}, "Last BSSID"), el("dd", {}, a.bssid)] : null,
+      (ss => ss.length ? [el("dt", {}, ss.length > 1 ? "SSIDs tested" : "SSID"), el("dd", {}, ss.map(([k, n]) => `${k} (${n})`).join(" · "))] : null)(countBy(a.rows, r => r.ssid)),
+      (w => w ? [el("dt", {}, "Location"), el("dd", {}, w.where)] : null)([...a.rows].reverse().find(r => r.where)),
+      el("dt", {}, "Checks"), el("dd", {}, `${a.rows.length}, last ${fmtWhen(last.ts)}`)),
+    el("div", { class: "badges" }, badgesFor(a)));
+
+  const tests = a.rows.filter(r => r.speedAvg != null);
+  if (tests.length) {
+    const band = tests[tests.length - 1].band;
+    const th = S.thresholds[band] ?? null;
+    main.append(el("h2", {}, "Speed"), chart({
+      title: "Download speed per test", sub: `average with min–max range · oldest → newest${th ? ` · pass line ${th} Mbps (${band} GHz)` : ""}`,
+      pts: tests.map(r => ({ y: r.speedAvg, lo: r.speedMin, hi: r.speedMax, r })), ref: th, unit: "Mbps", whisker: true, zero: true,
+      tip: p => [`${Math.round(p.y)} Mbps avg`, `min ${Math.round(p.lo)} · max ${Math.round(p.hi)}`,
+        p.r.up != null ? `upload ${Math.round(p.r.up)} Mbps` : "",
+        p.r.lat != null ? `latency ${Math.round(p.r.lat)} ms${p.r.latLoaded != null ? ` (${Math.round(p.r.latLoaded)} loaded)` : ""}` : "",
+        [p.r.ssid, p.r.location_name || p.r.city].filter(Boolean).join(" · "),
+        p.r.teams ? `Teams ${p.r.teams === "PASS" ? "✓ ok" : "✕ " + (p.r.teams_note || "not ok")}` : "",
+        fmtWhen(p.r.ts), [p.r.speed ? `status ${p.r.speed}` : "", p.r.speed_site ? `via ${p.r.speed_site}${p.r.speed_colo ? " " + p.r.speed_colo : ""}` : ""].filter(Boolean).join(" · ")],
+    }));
+  }
+  const rs = a.rows.filter(r => r.rssi != null);
+  if (rs.length) {
+    main.append(el("h2", {}, "Signal"), chart({
+      title: "Tablet RSSI per check", sub: "dBm · higher is stronger · oldest → newest",
+      pts: rs.map(r => ({ y: r.rssi, r })), unit: "dBm", line: true,
+      tip: p => [`${p.y} dBm`, fmtWhen(p.r.ts), p.r.snr_wlc_db ? `WLC SNR ${p.r.snr_wlc_db} dB` : p.r.rssi_wlc_dbm ? `WLC RSSI ${p.r.rssi_wlc_dbm} dBm` : ""],
+    }));
+  }
+  const photos = [...new Map(a.rows.filter(r => r.photo_file).map(r => [r.photo_file, r])).values()].reverse();
+  if (photos.length) main.append(el("h2", {}, `Label photo${photos.length > 1 ? "s" : ""}`),
+    el("div", { class: "photos" }, photos.slice(0, 6).map(photoCard)),
+    el("div", { class: "hash" }, `SHA-256 of latest: ${photos[0].photo_sha256 || "?"}`));
+  if (a.lastHealth) apHealth(a);
+  main.append(el("h2", {}, "All checks"), historyTable(a.rows));
+}
+
+// ---------------------------------------------------------------- AP health (debugmyap)
+const BANDN = { "2.4": 0, "5": 1, "6": 2 };
+function apHealth(a) {
+  const r = a.lastHealth;
+  const radios = S.rows.filter(x => x.isRadio && x.run_id === r.run_id && x.ap_name === r.ap_name)
+    .sort((x, y) => (BANDN[y.band] ?? 9) - (BANDN[x.band] ?? 9));
+  const poe = [r.poe_type, r.poe_watts ? `${r.poe_watts} W` : ""].filter(Boolean).join(" · ");
+  const load = [r.ap_cpu_pct ? `CPU ${Math.round(num(r.ap_cpu_pct))}%` : "", r.ap_mem_pct ? `memory ${Math.round(num(r.ap_mem_pct))}%` : ""].filter(Boolean).join(" · ");
+  main.append(el("h2", {}, `AP health (${fmtWhen(r.ts)})`),
+    el("dl", { class: "kv" },
+      el("dt", {}, "Status"), el("dd", {}, `${r.ap_status}${num(r.ap_issues) ? ` · ${r.ap_issues} item${r.ap_issues === "1" ? "" : "s"} to check` : ""}`),
+      r.ap_model ? [el("dt", {}, "Model"), el("dd", {}, [r.ap_model, r.ap_version].filter(Boolean).join(" · "))] : null,
+      r.ap_location ? [el("dt", {}, "Location"), el("dd", {}, r.ap_location)] : null,
+      el("dt", {}, "Uptime"), el("dd", {}, fmtUptime(r.ap_uptime_s) + (r.ap_reboots ? ` · ${r.ap_reboots} reboots on record` : "")),
+      poe ? [el("dt", {}, "PoE"), el("dd", {}, poe + (r.poe_status === "WARN" ? " · restricted" : ""))] : null,
+      load ? [el("dt", {}, "AP load"), el("dd", {}, load)] : null,
+      r.ap_rebootstraps ? [el("dt", {}, "Rejoins"), el("dd", {}, `${r.ap_rebootstraps}, last ${r.ap_last_rebootstrap}`)] : null,
+      r.ap_crash ? [el("dt", {}, "Crash"), el("dd", {}, r.ap_crash === "True" ? "crash on record" : "none")] : null,
+      r.ap_clients_by_ssid ? [el("dt", {}, "Clients"), el("dd", {}, `${r.ap_clients} · ` + r.ap_clients_by_ssid.split(";").map(x => x.replace(":", " ")).join(", "))] : null));
+  if (radios.length) main.append(el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, ["Radio", "Channel", "Power dBm", "Util %", "Noise dBm", "Interf. %", "Clients", "Same-channel APs"].map(h => el("th", {}, h)))),
+    el("tbody", {}, radios.map(x => el("tr", {},
+      el("td", {}, el("span", { class: "ic " + tone(x.radio_status), style: "display:inline-flex;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;margin-right:6px", "aria-hidden": "true" }, ICON[tone(x.radio_status)]), `${x.band} GHz`),
+      x.radio_state === "OFF" ? el("td", { colspan: 7 }, "off") : x.radio_state === "DOWN" ? el("td", { colspan: 7 }, "down") : [
+        el("td", {}, `${x.channel}${x.radio_width_mhz ? ` (${x.radio_width_mhz} MHz)` : ""}`),
+        el("td", { class: "num" }, x.tx_power_dbm || (x.eirp_dbm ? `${x.eirp_dbm} EIRP` : "")),
+        el("td", { class: "num" }, x.chan_util_pct), el("td", { class: "num" }, x.noise_dbm),
+        el("td", { class: "num" }, x.interference_pct), el("td", { class: "num" }, x.radio_clients),
+        el("td", { class: "num" }, x.radio_neighbors ? `${x.radio_cochannel || 0} of ${x.radio_neighbors} heard` : "")]))))));
+  // utilization over time for the busiest band seen
+  const hist = S.rows.filter(x => x.isRadio && x.ap_name === r.ap_name && x.site === r.site && num(x.chan_util_pct) != null)
+    .sort((x, y) => (x.ts || 0) - (y.ts || 0));
+  const band = hist.some(x => x.band === "5") ? "5" : hist[0]?.band;
+  const pts = hist.filter(x => x.band === band);
+  if (pts.length > 1) main.append(el("div", { style: "height:12px" }), chart({ title: `Channel utilization (${band} GHz)`, sub: `% of airtime busy · oldest → newest · warn line ${S.limits.aphealth.util_warn_pct}%`,
+    pts: pts.map(x => ({ y: num(x.chan_util_pct), r: x })), unit: "%", line: true, zero: true, ref: S.limits.aphealth.util_warn_pct,
+    tip: p => [`${p.y}% busy`, `ch ${p.r.channel} · ${p.r.radio_clients ?? "?"} clients`, fmtWhen(p.r.ts)] }));
+}
+
+function historyTable(rows) {
+  const tr = r => el("tr", {},
+    el("td", {}, fmtWhen(r.ts)),
+    el("td", {}, modName(r)),
+    el("td", {}, r.ssid || ""),
+    el("td", {}, r.label ? `${r.labelNum ? "#" + parseInt(r.labelNum, 10) + " " : ""}${{ VERIFIED: "✓✓ OCR", CONFIRMED: "✓ typed", CONSISTENT: "✓ read", MISMATCH: "✕", CONFLICT: "✕ OCR≠typed", REVIEW: "? unreadable" }[r.label]}` : ""),
+    el("td", {}, r.link_status === "DOWN" ? "down" : r.link_mbps ? `${r.link_mbps} ${r.link_duplex || ""}` : ""),
+    el("td", { class: "num" }, r.speedAvg != null ? `${Math.round(r.speedAvg)}${r.speed ? " " + r.speed : ""}` : ""),
+    el("td", { class: "num" }, r.up != null ? Math.round(r.up) : ""),
+    el("td", { class: "num" }, r.lat != null ? `${Math.round(r.lat)}${r.latLoaded != null ? " / " + Math.round(r.latLoaded) : ""}` : ""),
+    el("td", {}, r.teams ? (r.teams === "PASS" ? "✓" : "✕") : ""),
+    el("td", { class: "num" }, r.rssi ?? ""),
+    el("td", {}, r.channel ? `${r.band ? r.band + " GHz " : ""}ch ${r.channel}` : ""),
+    el("td", {}, r.location_name || r.city || ""),
+    el("td", {}, r.photo_file ? el("a", { href: photoUrl(r), target: "_blank", rel: "noopener" }, "photo") : ""));
+  return el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, ["When", "Module", "SSID", "Label", "Link", "Down Mbps", "Up Mbps", "Latency ms (idle / loaded)", "Teams", "RSSI", "Radio", "Where", "Photo"].map(h => el("th", {}, h)))),
+    el("tbody", {}, [...rows].reverse().map(tr))));
+}
+
+// ---------------------------------------------------------------- controllers (debugmywlc)
+function fmtUptime(s) { s = num(s); if (s == null) return "?"; const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600); return d ? `${d}d ${h}h` : `${h}h ${Math.floor(s % 3600 / 60)}m`; }
+function lvl(v, w, f) { v = num(v); return v == null ? null : v >= f ? "FAIL" : v >= w ? "WARN" : "PASS"; }
+function wlcsFrom(rows) {
+  const m = new Map();
+  for (const r of rows) { let w = m.get(r.wlc_name); if (!w) m.set(r.wlc_name, w = { name: r.wlc_name, rows: [] }); w.rows.push(r); }
+  for (const w of m.values()) { w.rows.sort((a, b) => (a.ts || 0) - (b.ts || 0)); w.last = w.rows[w.rows.length - 1]; }
+  return [...m.values()].sort((a, b) => ({ FAIL: 0, WARN: 1, PASS: 2 }[a.last.wlc_status] ?? 3) - ({ FAIL: 0, WARN: 1, PASS: 2 }[b.last.wlc_status] ?? 3) || a.name.localeCompare(b.name));
+}
+function wlcBadges(r) {
+  const L = S.limits.wlchealth;
+  const b = [badge("Status", (r.wlc_status || "?").toLowerCase(), r.wlc_status)];
+  if (r.aps_total) b.push(badge("APs down", `${r.aps_down}/${r.aps_total} (${r.aps_down_pct}%)`, lvl(r.aps_down_pct, L.aps_down_warn_pct, L.aps_down_fail_pct)));
+  if (r.cpu_pct) b.push(badge("CPU", `${Math.round(num(r.cpu_pct))}%`, lvl(r.cpu_pct, L.cpu_warn_pct, L.cpu_fail_pct)));
+  if (r.mem_pct) b.push(badge("Mem", `${Math.round(num(r.mem_pct))}%`, lvl(r.mem_pct, L.mem_warn_pct, L.mem_fail_pct)));
+  if (r.wlc_uptime_s) b.push(badge("Up", fmtUptime(r.wlc_uptime_s), num(r.wlc_uptime_s) < L.uptime_warn_hours * 3600 ? "WARN" : "PASS"));
+  if (r.clients_unique) b.push(badge("Clients", r.clients_unique, null));
+  return b;
+}
+function wlcCard(w) {
+  const r = w.last;
+  return el("a", { class: "card", href: "#/wlc/" + encodeURIComponent(w.name) },
+    el("div", { class: "top" }, el("span", { class: "name" }, w.name), el("span", { class: "meta" }, fmtWhen(r.ts))),
+    el("div", { class: "meta" }, `${siteLabel(r.site, r.site_type)} \u00b7 ${[r.wlc_model, r.wlc_version].filter(Boolean).join(" \u00b7 ")} \u00b7 ${w.rows.length} check${w.rows.length === 1 ? "" : "s"}`),
+    el("div", { class: "badges" }, wlcBadges(r)));
+}
+function viewWlcs() {
+  main.append(filters(false));
+  const ws = wlcsFrom(S.rows.filter(r => r.isWlc && r.wlc_status && inRange(r)));
+  main.append(el("h2", {}, `${ws.length} controller${ws.length === 1 ? "" : "s"}`));
+  main.append(ws.length ? el("div", {}, ws.map(wlcCard)) : el("div", { class: "empty" }, "No controller checks in this range. Run Debug my WLC (menu 3) on the tablet."));
+}
+function viewWlc(name) {
+  main.append(el("a", { class: "back", href: "#/wlcs" }, "\u2039 All WLCs"));
+  const w = wlcsFrom(S.rows.filter(r => r.isWlc && r.wlc_status && r.wlc_name === name))[0];
+  if (!w) { main.append(el("div", { class: "empty" }, "No checks for this controller.")); return; }
+  const r = w.last;
+  main.append(el("div", { class: "title" }, w.name),
+    el("dl", { class: "kv" },
+      el("dt", {}, "Site"), el("dd", {}, siteLabel(r.site, r.site_type)),
+      el("dt", {}, "Model"), el("dd", {}, [r.wlc_model, r.wlc_version].filter(Boolean).join(" \u00b7 ") || "?"),
+      el("dt", {}, "Uptime"), el("dd", {}, `${fmtUptime(r.wlc_uptime_s)}${r.reboot_cause ? " \u00b7 last reboot: " + r.reboot_cause : ""}`),
+      r.aps_down_list ? [el("dt", {}, "Down APs"), el("dd", {}, r.aps_down_list.split(";").join(", "))] : null,
+      el("dt", {}, "Checks"), el("dd", {}, `${w.rows.length}, last ${fmtWhen(r.ts)}`)),
+    el("div", { class: "badges" }, wlcBadges(r)));
+  const ssid = S.rows.filter(x => x.isWlc && x.run_id === r.run_id && x.ssid && !x.wlc_status).sort((a, b) => num(b.clients) - num(a.clients));
+  if (ssid.length) main.append(el("h2", {}, "Clients by SSID (last check)"), el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, ["SSID", "Clients", "APs"].map(h => el("th", {}, h)))),
+    el("tbody", {}, ssid.map(x => el("tr", {}, el("td", {}, x.ssid), el("td", { class: "num" }, x.clients), el("td", { class: "num" }, x.ssid_aps || "")))))));
+  const pts = w.rows.filter(x => num(x.aps_down_pct) != null);
+  if (pts.length) main.append(el("h2", {}, "APs down"), chart({ title: "APs down per check", sub: "% of APs on this controller \u00b7 oldest \u2192 newest",
+    pts: pts.map(x => ({ y: num(x.aps_down_pct), r: x })), unit: "%", line: true, zero: true, ref: S.limits.wlchealth.aps_down_warn_pct,
+    tip: p => [`${p.y}% down`, `${p.r.aps_down} of ${p.r.aps_total} APs`, fmtWhen(p.r.ts)] }));
+  main.append(el("h2", {}, "All checks"), el("div", { class: "tablewrap" }, el("table", {},
+    el("thead", {}, el("tr", {}, ["When", "Status", "CPU %", "Mem %", "Disk %", "APs down", "Clients", "Uptime"].map(h => el("th", {}, h)))),
+    el("tbody", {}, [...w.rows].reverse().map(x => el("tr", {},
+      el("td", {}, fmtWhen(x.ts)), el("td", {}, x.wlc_status || ""), el("td", { class: "num" }, x.cpu_pct ? Math.round(num(x.cpu_pct)) : ""),
+      el("td", { class: "num" }, x.mem_pct ? Math.round(num(x.mem_pct)) : ""), el("td", { class: "num" }, x.storage_pct || ""),
+      el("td", { class: "num" }, x.aps_total ? `${x.aps_down}/${x.aps_total}` : ""), el("td", { class: "num" }, x.clients_unique || ""),
+      el("td", {}, fmtUptime(x.wlc_uptime_s))))))));
+}
+
+// ---------------------------------------------------------------- chart (hand-drawn SVG, one series)
+function niceStep(raw) {
+  const mag = Math.pow(10, Math.floor(Math.log10(raw || 1))), r = raw / mag;
+  return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 5 ? 5 : 10) * mag;
+}
+function chart(o) {
+  const W = 640, H = 220, L = 44, R = 16, T = 14, B = 26;
+  const ys = o.pts.flatMap(p => [p.y, p.lo, p.hi]).filter(v => v != null);
+  if (o.ref != null) ys.push(o.ref);
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if (o.zero) lo = 0;
+  if (hi === lo) { hi += 5; lo -= o.zero ? 0 : 5; }
+  const step = niceStep((hi - lo) / 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const n = o.pts.length;
+  const X = i => n === 1 ? L + (W - L - R) / 2 : L + 12 + i * (W - L - R - 24) / (n - 1);
+  const Y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const g = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": o.title });
+  for (let v = lo; v <= hi + 1e-9; v += step) {
+    g.append(sv("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: "var(--grid)", "stroke-width": 1 }),
+      sv("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end" }, Math.round(v * 10) / 10));
+  }
+  if (o.ref != null) {
+    g.append(sv("line", { x1: L, x2: W - R, y1: Y(o.ref), y2: Y(o.ref), stroke: "var(--ref)", "stroke-width": 1.5 }));
+  }
+  const first = o.pts[0].r.ts, lastp = o.pts[n - 1].r.ts;
+  g.append(sv("text", { x: X(0), y: H - 6, "text-anchor": n === 1 ? "middle" : "start" }, fmtWhen(first)));
+  if (n > 1) g.append(sv("text", { x: X(n - 1), y: H - 6, "text-anchor": "end" }, fmtWhen(lastp)));
+  if (o.line && n > 1) {
+    g.append(sv("polyline", { points: o.pts.map((p, i) => `${X(i)},${Y(p.y)}`).join(" "), fill: "none",
+      stroke: "var(--series)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  }
+  o.pts.forEach((p, i) => {
+    if (o.whisker && p.lo != null && p.hi != null) {
+      g.append(sv("line", { x1: X(i), x2: X(i), y1: Y(p.lo), y2: Y(p.hi), stroke: "var(--series)", "stroke-width": 2, "stroke-linecap": "round", opacity: 0.55 }));
+      for (const v of [p.lo, p.hi]) g.append(sv("line", { x1: X(i) - 5, x2: X(i) + 5, y1: Y(v), y2: Y(v), stroke: "var(--series)", "stroke-width": 2, "stroke-linecap": "round", opacity: 0.55 }));
+    }
+    g.append(sv("circle", { cx: X(i), cy: Y(p.y), r: 5, fill: "var(--series)", stroke: "var(--surface)", "stroke-width": 2 }));
+  });
+  // last value labelled directly
+  const lp = o.pts[n - 1];
+  g.append(sv("text", { x: X(n - 1) - 10, y: Y(lp.y) - 10, "text-anchor": "end",
+    style: "fill: var(--ink); font-size: 12px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 4px" },
+    o.unit === "%" ? `${Math.round(lp.y * 10) / 10}%` : `${Math.round(lp.y)} ${o.unit}`));
+  const hair = sv("line", { y1: T, y2: H - B, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" });
+  g.append(hair);
+  const tip = el("div", { class: "tip", role: "status" });
+  const box = el("div", { class: "chart" }, el("div", { class: "ct" }, o.title), el("div", { class: "cs" }, o.sub), g, tip);
+  const nearest = ev => {
+    const rect = g.getBoundingClientRect(), x = (ev.clientX - rect.left) * W / rect.width;
+    let best = 0;
+    for (let i = 1; i < n; i++) if (Math.abs(X(i) - x) < Math.abs(X(best) - x)) best = i;
+    return best;
+  };
+  const show = ev => {
+    const i = nearest(ev), p = o.pts[i];
+    hair.setAttribute("x1", X(i)); hair.setAttribute("x2", X(i)); hair.setAttribute("visibility", "visible");
+    const lines = o.tip(p).filter(Boolean);
+    tip.replaceChildren(el("b", {}, lines[0]), ...lines.slice(1).map(t => [el("span", {}, t), el("br")]).flat());
+    tip.style.display = "block";
+    const rect = g.getBoundingClientRect(), brect = box.getBoundingClientRect();
+    const px = rect.left - brect.left + X(i) * rect.width / W;
+    tip.style.left = Math.max(4, Math.min(px - tip.offsetWidth / 2, box.clientWidth - tip.offsetWidth - 4)) + "px";
+    tip.style.top = (rect.top - brect.top + Y(p.y) * rect.height / H - tip.offsetHeight - 14) + "px";
+  };
+  const hide = () => { tip.style.display = "none"; hair.setAttribute("visibility", "hidden"); };
+  g.addEventListener("pointermove", show); g.addEventListener("pointerdown", show); g.addEventListener("pointerleave", hide);
+  return box;
+}
+
+// ---------------------------------------------------------------- loading
+function setLive(on, txt) {
+  document.getElementById("live").className = "live" + (on ? "" : " off");
+  document.getElementById("livetxt").textContent = txt;
+}
+async function fetchRows(force) {
+  try {
+    const res = await fetch(`/api/rows?t=${encodeURIComponent(TOKEN)}&archive=${S.archive ? 1 : 0}`, { cache: "no-store" });
+    const d = await res.json();
+    if (d.thresholds) S.thresholds = d.thresholds;
+    if (d.limits) for (const k in d.limits) S.limits[k] = Object.assign({}, S.limits[k], d.limits[k]);
+    S.rows = placeSites(linkByBssid(d.rows.map(normalize))); S.stamp = d.stamp;      // after limits: Teams uses them
+    setLive(true, `live · v${d.version}`);
+    render();
+  } catch (e) { setLive(false, "app not running"); }
+}
+async function poll() {
+  try {
+    const res = await fetch(`/api/stamp?t=${encodeURIComponent(TOKEN)}&archive=${S.archive ? 1 : 0}`, { cache: "no-store" });
+    const d = await res.json();
+    if (d.stamp !== S.stamp) await fetchRows();
+    else setLive(true, document.getElementById("livetxt").textContent.replace("app not running", "live"));
+  } catch (e) { setLive(false, "app not running"); }
+}
+
+// offline mode (laptop): pick the CSV files
+function parseCSV(text) {
+  const out = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); out.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); out.push(row); }
+  const [h, ...rest] = out;
+  return (rest || []).filter(r => r.length > 1).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? ""])));
+}
+function picker() {
+  main.replaceChildren(el("div", { class: "picker" },
+    el("div", { style: "font-weight:650;font-size:17px" }, "Open your log files"),
+    el("div", { class: "note" }, "Pick one or more whatsmyap_YYYY-MM.csv files (and any from archive/). Nothing is uploaded; they're read in this browser only."),
+    el("input", { type: "file", accept: ".csv,text/csv", multiple: "", onchange: async e => {
+      const rows = [];
+      for (const f of e.target.files) rows.push(...parseCSV(await f.text()));
+      S.rows = placeSites(linkByBssid(rows.map(normalize)));
+      setLive(false, `${e.target.files.length} file${e.target.files.length === 1 ? "" : "s"} loaded`);
+      if (!location.hash || location.hash === "#") location.hash = "#/today"; else render();
+    } })));
+}
+
+// ---------------------------------------------------------------- router
+function render() {
+  const h = location.hash || "#/today";
+  document.getElementById("nav-today").className = h.startsWith("#/today") ? "on" : "";
+  document.getElementById("nav-aps").className = h.startsWith("#/ap") ? "on" : "";
+  document.getElementById("nav-wlcs").className = h.startsWith("#/wlc") ? "on" : "";
+  if (!SERVED && !S.rows.length) return picker();
+  const y = window.scrollY;
+  main.replaceChildren();
+  listBox = null;
+  if (h.startsWith("#/wlc/")) viewWlc(decodeURIComponent(h.slice(6)));
+  else if (h.startsWith("#/wlcs")) viewWlcs();
+  else if (h.startsWith("#/ap/")) viewAp(decodeURIComponent(h.slice(5)));
+  else if (h.startsWith("#/aps")) viewAps();
+  else viewToday();
+  window.scrollTo(0, y);
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+if (EMBED) {
+  if (EMBED.thresholds) S.thresholds = EMBED.thresholds;
+  if (EMBED.limits) for (const k in EMBED.limits) S.limits[k] = Object.assign({}, S.limits[k], EMBED.limits[k]);
+  S.rows = placeSites(linkByBssid(EMBED.rows.map(normalize)));
+  document.title = `${EMBED.name} · What's My AP`;
+  setLive(false, `survey ${EMBED.name} · v${EMBED.version}`);
+  render();
+}
+else if (SERVED) { fetchRows(); setInterval(poll, 8000); }
+else { setLive(false, "offline · open CSV files"); render(); }
+</script>
+</body>
+</html>

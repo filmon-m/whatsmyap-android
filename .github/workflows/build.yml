@@ -1,0 +1,47 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk WhatsMyAP-dev-${{ github.run_number }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WhatsMyAP-dev-${{ github.run_number }}
+          path: WhatsMyAP-dev-${{ github.run_number }}.apk
+
+      # One always-current download link for the tablet:
+      # https://github.com/<owner>/<repo>/releases/tag/dev
+      - name: Publish to the "dev" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete dev --yes --cleanup-tag || true
+          gh release create dev WhatsMyAP-dev-${{ github.run_number }}.apk \
+            --prerelease --title "Development build ${{ github.run_number }}" \
+            --notes "Built from ${GITHUB_SHA::7}. Install on the tablet: open this page in Chrome, tap the APK, allow installs from Chrome."
