@@ -11,6 +11,7 @@ import io.github.filmonm.whatsmyap.data.LabelReader
 import io.github.filmonm.whatsmyap.data.LocationSource
 import io.github.filmonm.whatsmyap.data.Photo
 import io.github.filmonm.whatsmyap.data.Place
+import io.github.filmonm.whatsmyap.data.Results
 import io.github.filmonm.whatsmyap.data.SpeedProgress
 import io.github.filmonm.whatsmyap.data.SpeedResult
 import io.github.filmonm.whatsmyap.data.Settings
@@ -181,6 +182,9 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         val name = survey.active ?: return null
         return withContext(Dispatchers.IO) { survey.stage(name) }
     }
+
+    /** Every check on this tablet (monthly logs), for the Results dashboard. */
+    suspend fun stageResults(): File = withContext(Dispatchers.IO) { Results.stage(ctx) }
 
     // ------------------------------------------------------------------ logging
     private fun speedColumns(sp: Speed): Map<String, Any?> {

@@ -19,26 +19,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import java.io.File
 
-/** The survey report (the prototype's dashboard with the survey built in), shown in a WebView. */
+/** The web dashboard in a WebView: the running survey's report, or every check on the tablet (all = true). */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun ReportScreen(vm: FieldViewModel, onBack: () -> Unit) {
+fun ReportScreen(vm: FieldViewModel, onBack: () -> Unit, all: Boolean = false) {
     var file by remember { mutableStateOf<File?>(null) }
     var failed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        file = runCatching { vm.stageReport() }.getOrNull()
+        file = runCatching { if (all) vm.stageResults() else vm.stageReport() }.getOrNull()
         failed = file == null
     }
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
         TextButton(onClick = onBack, modifier = Modifier.padding(4.dp)) { Text("‹ Back") }
         when {
-            failed -> Text("No survey running - start one to see its report.", Modifier.padding(16.dp))
+            failed -> Text(if (all) "Could not build the results page." else "No survey running - start one to see its report.", Modifier.padding(16.dp))
             file == null -> Text("Preparing the report...", Modifier.padding(16.dp))
             else -> AndroidView(
                 factory = { ctx ->
                     WebView(ctx).apply {
                         settings.javaScriptEnabled = true
-                        settings.allowFileAccess = true          // report.html + photos/ in the survey folder
+                        settings.allowFileAccess = true          // the page + photos next to it
                         settings.domStorageEnabled = true
                     }
                 },

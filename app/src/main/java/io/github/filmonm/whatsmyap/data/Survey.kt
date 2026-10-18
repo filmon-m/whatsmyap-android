@@ -6,9 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
 import io.github.filmonm.whatsmyap.BuildConfig
-import io.github.filmonm.whatsmyap.core.Rules
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -97,20 +94,9 @@ class Survey(private val context: Context) {
         return ByteArrayOutputStream().also { out.compress(Bitmap.CompressFormat.JPEG, REVIEW_QUALITY, it) }.toByteArray()
     }
 
-    /** The dashboard page with this survey's rows built in. */
-    fun reportHtml(name: String, rows: List<Map<String, String>>): String {
-        val page = context.assets.open("dashboard.html").bufferedReader().use { it.readText() }
-        val embed = JSONObject().apply {
-            put("name", name)
-            put("rows", JSONArray(rows.map { JSONObject(it as Map<*, *>) }))
-            put("version", BuildConfig.VERSION_NAME)
-            put("thresholds", JSONObject(Rules.thresholds as Map<*, *>))
-            put("limits", JSONObject().put("teams", JSONObject().put("rtt_ms", Rules.teamsRttMs).put("jitter_ms", Rules.teamsJitterMs)))
-            put("photoDir", "photos")
-        }
-        val data = embed.toString().replace("</", "<\\/")
-        return page.replaceFirst("<script>", "<script>window.EMBED = $data;</script>\n<script>")
-    }
+    /** The dashboard page with this survey's rows built in (all dates shown). */
+    fun reportHtml(name: String, rows: List<Map<String, String>>): String =
+        Results.page(context, name, rows, label = null, range = "all")
 
     /** Writes report.html + review-size photos into the survey folder (for viewing in the app). */
     fun stage(name: String): File {

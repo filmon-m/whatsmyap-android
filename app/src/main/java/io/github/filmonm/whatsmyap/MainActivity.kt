@@ -39,7 +39,7 @@ fun App(activity: ComponentActivity) {
     // one ViewModel for the whole Field Survey flow (survey, camera and report share it)
     val field: FieldViewModel = viewModel(viewModelStoreOwner = activity)
     NavHost(navController = nav, startDestination = "home") {
-        composable("home") { HomeScreen(onField = { nav.navigate("field") }, onSettings = { nav.navigate("settings") }) }
+        composable("home") { HomeScreen(onField = { nav.navigate("field") }, onResults = { nav.navigate("results") }, onSettings = { nav.navigate("settings") }) }
         composable("settings") { SettingsScreen(field, onBack = { nav.popBackStack() }) }
         composable("field") {
             FieldSurveyScreen(field, onCamera = { nav.navigate("camera") }, onReport = { nav.navigate("report") },
@@ -47,5 +47,6 @@ fun App(activity: ComponentActivity) {
         }
         composable("camera") { CameraScreen(field, onDone = { nav.popBackStack() }) }
         composable("report") { ReportScreen(field, onBack = { nav.popBackStack() }) }
+        composable("results") { ReportScreen(field, onBack = { nav.popBackStack() }, all = true) }
     }
 }

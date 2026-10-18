@@ -128,10 +128,10 @@ const S = {
     aphealth: { util_warn_pct: 50 },
     teams: { rtt_ms: 150, jitter_ms: 30 },
   },
-  range: load("range", "7"), site: load("site", ""), archive: load("archive", "0") === "1", q: "",
+  range: "1", site: load("site", ""), archive: load("archive", "0") === "1", q: "",
 };
 const EMBED = window.EMBED || null;      // survey report: data built into the page
-if (EMBED) { S.range = "all"; S.site = ""; }
+if (EMBED) { S.range = EMBED.range || "all"; S.site = ""; }
 function load(k, d) { try { return localStorage.getItem("wma_" + k) ?? d; } catch (e) { return d; } }
 function save(k, v) { try { localStorage.setItem("wma_" + k, v); } catch (e) {} }
 
@@ -303,6 +303,7 @@ function teamsBadge(r) {
 function photoUrl(r) {
   if (!r.photo_file) return "";
   const month = (r.photo_taken || r.timestamp || "").slice(0, 7);
+  if (EMBED && r.photo_path) return r.photo_path.split("/").map(encodeURIComponent).join("/");
   if (EMBED) return `${EMBED.photoDir}/${encodeURIComponent(r.photo_file)}`;
   const rel = `photos/${month}/${encodeURIComponent(r.photo_file)}`;
   return SERVED ? `/${rel}?t=${encodeURIComponent(TOKEN)}` : rel;   // offline: next to dashboard.html
@@ -330,7 +331,7 @@ function fmtWhen(d) {
 function filters(showSearch) {
   const sites = new Map();
   for (const r of S.rows) if (r.site) sites.set(r.site + "|" + r.site_type, siteLabel(r.site, r.site_type));
-  const range = el("select", { "aria-label": "Date range", onchange: e => { S.range = e.target.value; save("range", S.range); render(); } },
+  const range = el("select", { "aria-label": "Date range", onchange: e => { S.range = e.target.value; render(); } },
     ...[["1", "Today"], ["7", "Last 7 days"], ["30", "Last 30 days"], ["all", "All time"]]
       .map(([v, t]) => el("option", { value: v, selected: S.range === v ? "" : null }, t)));
   const site = el("select", { "aria-label": "Site", onchange: e => { S.site = e.target.value; save("site", S.site); render(); } },
@@ -743,7 +744,7 @@ if (EMBED) {
   if (EMBED.limits) for (const k in EMBED.limits) S.limits[k] = Object.assign({}, S.limits[k], EMBED.limits[k]);
   S.rows = placeSites(linkByBssid(EMBED.rows.map(normalize)));
   document.title = `${EMBED.name} · What's My AP`;
-  setLive(false, `survey ${EMBED.name} · v${EMBED.version}`);
+  setLive(false, `${EMBED.label || "survey " + EMBED.name} · v${EMBED.version}`);
   render();
 }
 else if (SERVED) { fetchRows(); setInterval(poll, 8000); }

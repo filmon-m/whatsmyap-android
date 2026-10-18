@@ -22,7 +22,7 @@ import io.github.filmonm.whatsmyap.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onField: () -> Unit, onSettings: () -> Unit) {
+fun HomeScreen(onField: () -> Unit, onResults: () -> Unit, onSettings: () -> Unit) {
     Surface(Modifier.fillMaxSize()) {
         Column(
             Modifier.safeDrawingPadding().padding(24.dp),
@@ -45,6 +45,13 @@ fun HomeScreen(onField: () -> Unit, onSettings: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Inspect, Debug my AP, Debug my WLC, Verify a survey. Unlocked by WLC credentials - coming in phase 2.",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            OutlinedCard(onClick = onResults, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(20.dp)) {
+                    Text("Results", style = MaterialTheme.typography.titleLarge)
+                    Text("Dashboard of every check on this tablet - Overview, APs, speed and Teams. Opens on Today.",
+                        style = MaterialTheme.typography.bodyMedium)
                 }
             }
             TextButton(onClick = onSettings) { Text("Settings") }
