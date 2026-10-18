@@ -126,11 +126,22 @@ class SpeedTest(private val context: Context) {
         prefs.edit().putLong("at_" + Rules.siteName(url), System.currentTimeMillis()).apply()
 
     // ------------------------------------------------------------------ Cloudflare
+    /** "HTTP 403 (cf-mitigated: challenge)", "HTTP 429 (retry-after 120 s)": Cloudflare says WHY it refused -
+     *  cf-mitigated = bot protection stepped in; retry-after = plain rate limit and how long to wait. */
+    private fun refusal(r: okhttp3.Response): String {
+        val why = listOfNotNull(
+            r.header("cf-mitigated")?.let { "cf-mitigated: $it" },
+            r.header("retry-after")?.let { "retry-after $it s" },
+            r.header("cf-ray")?.substringAfterLast('-', "")?.ifBlank { null }?.let { "colo $it" },
+        )
+        return "HTTP ${r.code}" + if (why.isEmpty()) "" else " (${why.joinToString(", ")})"
+    }
+
     private fun ping(): Pair<Double, String> {
         val t0 = System.nanoTime()
         http.newCall(Request.Builder().url("$CLOUDFLARE/__down?bytes=0").build()).execute().use { r ->
-            if (r.code == 429) throw RateLimited()
-            if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+            if (r.code == 429) throw RateLimited(refusal(r))
+            if (!r.isSuccessful) throw IOException(refusal(r))
             r.body?.bytes()
             val ms = (System.nanoTime() - t0) / 1e6
             val server = Regex("dur=([\\d.]+)").find(r.header("server-timing").orEmpty())?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
@@ -139,7 +150,7 @@ class SpeedTest(private val context: Context) {
         }
     }
 
-    private class RateLimited : IOException("HTTP 429 Too Many Requests")
+    private class RateLimited(detail: String) : IOException(detail)
 
     private suspend fun cloudflare(progress: (SpeedProgress) -> Unit): SpeedResult = coroutineScope {
         progress(SpeedProgress("Latency", 0f))
@@ -161,8 +172,10 @@ class SpeedTest(private val context: Context) {
         val start = System.nanoTime()
         val elapsed = { (System.nanoTime() - start) / 1e9 }
         val pinger = async(Dispatchers.IO) {
+            // like the prototype: the first failed ping ends loaded-latency sampling (no hammering a refusing server)
             while (isActive && elapsed() < DOWN_SECONDS) {
-                runCatching { loaded += ping().first }
+                val ok = runCatching { loaded += ping().first }.isSuccess
+                if (!ok) break
                 delay(400)
             }
         }
@@ -174,8 +187,8 @@ class SpeedTest(private val context: Context) {
         try {
             while (elapsed() < DOWN_SECONDS) {
                 http.newCall(Request.Builder().url("$CLOUDFLARE/__down?bytes=$DOWN_CHUNK").build()).execute().use { r ->
-                    if (r.code == 429) throw RateLimited()
-                    if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+                    if (r.code == 429) throw RateLimited(refusal(r))
+                    if (!r.isSuccessful) throw IOException(refusal(r))
                     val input = r.body!!.byteStream()
                     while (true) {
                         coroutineContext.ensureActive()
@@ -211,7 +224,7 @@ class SpeedTest(private val context: Context) {
             while (upElapsed() < UP_SECONDS) {
                 coroutineContext.ensureActive()
                 http.newCall(Request.Builder().url("$CLOUDFLARE/__up").post(body).build()).execute().use { r ->
-                    if (!r.isSuccessful) throw IOException("HTTP ${r.code}")
+                    if (!r.isSuccessful) throw IOException(refusal(r))
                 }
                 upBytes += UP_CHUNK
                 progress(SpeedProgress("Upload", (upElapsed() / UP_SECONDS).toFloat().coerceAtMost(1f)))
