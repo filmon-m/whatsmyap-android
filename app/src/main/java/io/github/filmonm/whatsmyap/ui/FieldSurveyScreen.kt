@@ -253,8 +253,12 @@ private fun SpeedCard(vm: FieldViewModel, s: FieldState) {
     val r = sp.result
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            val tried = r.attempts.size > 1                // a fallback was needed: show the whole chain
             if (!r.ok) {
-                Text("Speed test failed: ${r.error}", color = Bad)
+                Text("Speed test failed", color = Bad, fontWeight = FontWeight.SemiBold)
+                r.attempts.ifEmpty { listOf(r.error.orEmpty()) }.forEach {
+                    Text(it, color = Bad, style = MaterialTheme.typography.bodySmall)
+                }
                 return@Column
             }
             val th = Rules.thresholds[sp.band]
@@ -279,6 +283,7 @@ private fun SpeedCard(vm: FieldViewModel, s: FieldState) {
             Text(details.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
             sp.teams?.takeIf { !it.pass }?.let { Text("Teams: ${it.why}", color = Bad, style = MaterialTheme.typography.bodySmall) }
             if (sp.roamed) Text("Roamed during the test", color = Warn)
+            if (tried) Text("Tried: " + r.attempts.joinToString(" \u2192 "), color = Warn, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

@@ -174,6 +174,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "speed_http_status" to r.httpStatus, "speed_site" to r.site, "speed_colo" to r.colo,
             "speed_up_mbps" to r.upMbps, "latency_ms" to r.latencyMs, "latency_loaded_ms" to r.loadedLatencyMs,
             "jitter_ms" to r.jitterMs,
+            "speed_attempts" to r.attempts.joinToString(" \u2192 ").ifBlank { null },
             "teams_status" to teams?.let { if (it.pass) "PASS" else "FAIL" }, "teams_note" to teams?.why?.ifBlank { null },
         )
     }

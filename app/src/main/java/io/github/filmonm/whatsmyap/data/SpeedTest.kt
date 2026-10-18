@@ -1,6 +1,7 @@
 package io.github.filmonm.whatsmyap.data
 
 import android.content.Context
+import io.github.filmonm.whatsmyap.BuildConfig
 import io.github.filmonm.whatsmyap.core.Rules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -11,6 +12,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
@@ -34,6 +36,8 @@ data class SpeedResult(
     val httpStatus: Int? = null,
     val rateLimited: Boolean = false,
     val aborted: Boolean = false,
+    /** Every server tried, in order, with its outcome: "cloudflare: HTTP 403", "vultr-lax: ok". */
+    val attempts: List<String> = emptyList(),
 ) {
     val ok get() = avg != null
 }
@@ -59,20 +63,34 @@ class SpeedTest(private val context: Context) {
         private const val UP_CHUNK = 5_000_000
     }
 
+    /** Present ourselves like the prototype did (same name, HTTP/1.1, no compression): a generic
+     *  "okhttp" client on HTTP/2 gets scored as a bot by Cloudflare and refused with 403. */
+    private val userAgent = "WhatsMyAP/" + BuildConfig.VERSION_NAME
     private val http = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
-        .retryOnConnectionFailure(false)
+        .protocols(listOf(Protocol.HTTP_1_1))
+        .retryOnConnectionFailure(true)
+        .addInterceptor { chain ->
+            chain.proceed(chain.request().newBuilder()
+                .header("User-Agent", userAgent)
+                .header("Accept-Encoding", "identity")
+                .build())
+        }
         .build()
     private val prefs = context.getSharedPreferences("speedtest", Context.MODE_PRIVATE)
 
     /** Cloudflare first; if it fails, the fallback servers in order, skipping any used in the last minute. */
     suspend fun run(progress: (SpeedProgress) -> Unit): SpeedResult = withContext(Dispatchers.IO) {
+        http.connectionPool.evictAll()            // fresh connections every test: no stale keep-alives
+        val attempts = mutableListOf<String>()
+        fun note(r: SpeedResult) = attempts.add("${r.site}: " + if (r.ok) "ok" else (r.error ?: "failed"))
         val cf = runCatching { cloudflare(progress) }.getOrElse { e ->
             if (e is kotlinx.coroutines.CancellationException) throw e
             SpeedResult(site = "cloudflare", error = e.message ?: e.javaClass.simpleName)
         }
-        if (cf.ok || cf.aborted) return@withContext cf
+        note(cf)
+        if (cf.ok || cf.aborted) return@withContext cf.copy(attempts = attempts)
         var last = cf
         val pending = FALLBACKS.toMutableList()
         var retried = false
@@ -85,15 +103,17 @@ class SpeedTest(private val context: Context) {
                     delay(1000)
                 }
             }
+            progress(SpeedProgress("${attempts.last()} - trying ${Rules.siteName(url)}", 0f))
             last = urlTest(url, progress)
-            if (last.ok || last.aborted) return@withContext last
+            note(last)
+            if (last.ok || last.aborted) return@withContext last.copy(attempts = attempts)
             pending.remove(url)
             if (pending.isEmpty() && last.rateLimited && !retried) {
                 retried = true
                 pending.add(url)
             }
         }
-        last
+        last.copy(attempts = attempts)
     }
 
     fun cooldown(url: String): Int {
@@ -251,7 +271,7 @@ class SpeedTest(private val context: Context) {
                 mb = total / 1e6, secs = secs, site = site, httpStatus = 200,
                 error = if (avg == null) "no data received" else null)
         } catch (e: IOException) {
-            SpeedResult(site = site, error = e.message ?: "connection failed")
+            SpeedResult(site = site, error = e.message?.substringBefore(" on http") ?: "connection failed")
         }
     }
 }
