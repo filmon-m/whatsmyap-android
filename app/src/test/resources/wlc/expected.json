@@ -1,8 +1,8 @@
 {
  "ap_number": {
   "": null,
-  "2164_AP49": 49,
-  "7761_AP14": 14,
+  "1001_AP49": 49,
+  "1002_AP14": 14,
   "AP-08": 8,
   "AP008": 8,
   "AP14": 14,
@@ -25,39 +25,39 @@
    "client_rows": [
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "band": "5",
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     }
    ],
    "cpu_pct": 9,
@@ -71,7 +71,7 @@
    },
    "flags": "da",
    "group": "Electronics",
-   "ip": "172.24.0.10",
+   "ip": "10.240.0.10",
    "location": "BLDG B, 1st Floor, Conference Room",
    "mem_pct": 45,
    "missing": [],
@@ -143,11 +143,11 @@
    {
     "ap_capwap_uptime_s": null,
     "ap_clients": 9,
-    "ap_clients_by_ssid": "SCHOOLNET:9",
+    "ap_clients_by_ssid": "EDNET:9",
     "ap_cpu_pct": 9,
     "ap_cpu_peak_pct": 39,
     "ap_crash": false,
-    "ap_ip": "172.24.0.10",
+    "ap_ip": "10.240.0.10",
     "ap_issues": 0,
     "ap_last_rebootstrap": "2026-10-10 06:17:08 DHCP Lease expired",
     "ap_location": "BLDG B, 1st Floor, Conference Room",
@@ -264,7 +264,7 @@
    ],
    [
     "Clients",
-    "9 total \u00b7 SCHOOLNET 9 (5 GHz 9)",
+    "9 total \u00b7 EDNET 9 (5 GHz 9)",
     null
    ]
   ],
@@ -291,14 +291,14 @@
   "ip": "10.20.75.125",
   "result": {
    "ap": "AP14",
-   "ap_ip": "172.24.0.10",
+   "ap_ip": "10.240.0.10",
    "band": "5",
    "bssid": "b4:5d:50:a8:9d:10",
    "channel": "108",
    "raw": null,
    "rssi_wlc": null,
    "snr_wlc": 54,
-   "ssid": "SCHOOLNET",
+   "ssid": "EDNET",
    "state": "Wireless"
   },
   "vendor": "aruba"
@@ -327,8 +327,8 @@
   ],
   "facts": {
    "_down": [
-    "1683_AP039",
-    "1683_AP132",
+    "1003_AP039",
+    "1003_AP132",
     "AP66",
     "AP67",
     "AP68",
@@ -347,8 +347,8 @@
    "_total": 212,
    "ap_crash_info": true,
    "aps_down_names": [
-    "1683_AP039",
-    "1683_AP132",
+    "1003_AP039",
+    "1003_AP132",
     "AP66",
     "AP67",
     "AP68",
@@ -382,19 +382,19 @@
      "ssid": "Comm"
     },
     {
-     "aps": 1,
+     "aps": 199,
      "clients": 16,
-     "ssid": "SCHOOLNET-IoT"
+     "ssid": "EDNET-IoT"
     },
     {
-     "aps": null,
+     "aps": 196,
      "clients": 7,
-     "ssid": "SCHOOLNET-Gue"
+     "ssid": "EDNET-Guest"
     },
     {
-     "aps": 1,
+     "aps": 196,
      "clients": 344,
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     }
    ],
    "storage_mount": "/mnt/disk1",
@@ -418,7 +418,7 @@
     "alarms_major": null,
     "alarms_minor": null,
     "aps_down": 12,
-    "aps_down_list": "1683_AP039;1683_AP132;AP66;AP67;AP68;AP69;AP73;AP74;AP75;Test_AP_574;Test_AP_575;Test_AP_577",
+    "aps_down_list": "1003_AP039;1003_AP132;AP66;AP67;AP68;AP69;AP73;AP74;AP75;Test_AP_574;Test_AP_575;Test_AP_577",
     "aps_down_pct": 5.7,
     "aps_ignored": null,
     "aps_joined": null,
@@ -474,11 +474,11 @@
     "clients_24": null,
     "clients_5": null,
     "clients_6": null,
-    "network": "SCHOOLNET-IoT",
+    "network": "EDNET-IoT",
     "site": "samplelab",
     "site_type": "of",
-    "ssid": "SCHOOLNET-IoT",
-    "ssid_aps": 1,
+    "ssid": "EDNET-IoT",
+    "ssid_aps": 199,
     "wlc_name": "of-samplelab-w1",
     "wlc_vendor": "aruba8"
    },
@@ -487,11 +487,11 @@
     "clients_24": null,
     "clients_5": null,
     "clients_6": null,
-    "network": "SCHOOLNET-Gue",
+    "network": "EDNET-Guest",
     "site": "samplelab",
     "site_type": "of",
-    "ssid": "SCHOOLNET-Gue",
-    "ssid_aps": null,
+    "ssid": "EDNET-Guest",
+    "ssid_aps": 196,
     "wlc_name": "of-samplelab-w1",
     "wlc_vendor": "aruba8"
    },
@@ -500,11 +500,11 @@
     "clients_24": null,
     "clients_5": null,
     "clients_6": null,
-    "network": "SCHOOLNET",
+    "network": "EDNET",
     "site": "samplelab",
     "site_type": "of",
-    "ssid": "SCHOOLNET",
-    "ssid_aps": 1,
+    "ssid": "EDNET",
+    "ssid_aps": 196,
     "wlc_name": "of-samplelab-w1",
     "wlc_vendor": "aruba8"
    }
@@ -560,21 +560,21 @@
   "vendor": "aruba",
   "wlc": "of-samplelab-w1"
  },
- "cisco_ap_health_2164_AP49": {
-  "ap": "2164_AP49",
+ "cisco_ap_health_1001_AP49": {
+  "ap": "1001_AP49",
   "asked": [
-   "show ap name 2164_AP49 config general",
-   "show ap name 2164_AP49 config dot11 5ghz",
-   "show ap name 2164_AP49 auto-rf dot11 5ghz",
-   "show ap name 2164_AP49 config dot11 24ghz",
+   "show ap name 1001_AP49 config general",
+   "show ap name 1001_AP49 config dot11 5ghz",
+   "show ap name 1001_AP49 auto-rf dot11 5ghz",
+   "show ap name 1001_AP49 config dot11 24ghz",
    "show wlan summary",
-   "show wireless client summary | include 2164_AP49"
+   "show wireless client summary | include 1001_AP49"
   ],
   "facts": {
-   "ap": "2164_AP49",
+   "ap": "1001_AP49",
    "capwap_uptime_s": 2414639,
    "client_rows": [],
-   "ip": "172.24.2.109",
+   "ip": "10.240.2.109",
    "joined": "09/18/2026 15:44:46",
    "location": "BLDG AA594, LIBRARY",
    "missing": [
@@ -629,13 +629,13 @@
     "ap_cpu_pct": null,
     "ap_cpu_peak_pct": null,
     "ap_crash": null,
-    "ap_ip": "172.24.2.109",
+    "ap_ip": "10.240.2.109",
     "ap_issues": 0,
     "ap_last_rebootstrap": null,
     "ap_location": "BLDG AA594, LIBRARY",
     "ap_mem_pct": null,
     "ap_model": "C9115AXI-B",
-    "ap_name": "2164_AP49",
+    "ap_name": "1001_AP49",
     "ap_number": 49,
     "ap_reboots": null,
     "ap_rebootstraps": null,
@@ -658,7 +658,7 @@
     "wlc_vendor": "cisco9800"
    },
    {
-    "ap_name": "2164_AP49",
+    "ap_name": "1001_AP49",
     "ap_number": 49,
     "band": "5",
     "chan_util_pct": 1,
@@ -716,17 +716,17 @@
   "vendor": "cisco",
   "wlc": "es-sample-w1"
  },
- "cisco_ap_health_2164_AP99": {
-  "ap": "2164_AP99",
+ "cisco_ap_health_1001_AP99": {
+  "ap": "1001_AP99",
   "asked": [
-   "show ap name 2164_AP99 config general",
-   "show ap name 2164_AP99 config dot11 5ghz",
-   "show ap name 2164_AP99 config dot11 24ghz",
+   "show ap name 1001_AP99 config general",
+   "show ap name 1001_AP99 config dot11 5ghz",
+   "show ap name 1001_AP99 config dot11 24ghz",
    "show wlan summary",
-   "show wireless client summary | include 2164_AP99"
+   "show wireless client summary | include 1001_AP99"
   ],
   "facts": {
-   "ap": "2164_AP99",
+   "ap": "1001_AP99",
    "missing": [
     "general",
     "dot11 5",
@@ -761,7 +761,7 @@
   ],
   "ip": "10.30.98.135",
   "result": {
-   "ap": "7761_AP14",
+   "ap": "1002_AP14",
    "ap_ip": "",
    "band": "5",
    "bssid": "6c:d6:e3:3d:96:ce",
@@ -769,7 +769,7 @@
    "raw": null,
    "rssi_wlc": -47,
    "snr_wlc": 50,
-   "ssid": "SCHOOLNET",
+   "ssid": "EDNET",
    "state": "Associated"
   },
   "vendor": "cisco"
@@ -800,23 +800,23 @@
    "aps_notreg_names": [],
    "busiest_aps": [
     [
-     "2164_AP26",
+     "1001_AP26",
      17
     ],
     [
-     "2164_AP35",
+     "1001_AP35",
      17
     ],
     [
-     "2164_AP17",
+     "1001_AP17",
      10
     ],
     [
-     "2164_AP69",
+     "1001_AP69",
      9
     ],
     [
-     "2164_AP71",
+     "1001_AP71",
      9
     ]
    ],
@@ -842,7 +842,7 @@
       "2.4": 1
      },
      "clients": 1,
-     "ssid": "SCHOOLNET-IoT"
+     "ssid": "EDNET-IoT"
     },
     {
      "aps": null,
@@ -851,7 +851,7 @@
       "5": 131
      },
      "clients": 137,
-     "ssid": "SCHOOLNET"
+     "ssid": "EDNET"
     },
     {
      "aps": null,
@@ -860,7 +860,7 @@
       "5": 2
      },
      "clients": 3,
-     "ssid": "SCHOOLNET-Guest"
+     "ssid": "EDNET-Guest"
     }
    ],
    "temp_abnormal": [],
@@ -877,17 +877,17 @@
    "wlans": [
     {
      "id": 5,
-     "ssid": "SCHOOLNET",
+     "ssid": "EDNET",
      "up": true
     },
     {
      "id": 8,
-     "ssid": "SCHOOLNET-IoT",
+     "ssid": "EDNET-IoT",
      "up": true
     },
     {
      "id": 10,
-     "ssid": "SCHOOLNET-Guest",
+     "ssid": "EDNET-Guest",
      "up": true
     }
    ]
@@ -905,7 +905,7 @@
     "aps_max_seen": 85,
     "aps_missing": 0,
     "aps_total": 85,
-    "busiest_aps": "2164_AP26:17;2164_AP35:17;2164_AP17:10;2164_AP69:9;2164_AP71:9",
+    "busiest_aps": "1001_AP26:17;1001_AP35:17;1001_AP17:10;1001_AP69:9;1001_AP71:9",
     "clients_total": 144,
     "clients_unique": null,
     "controller_crash": null,
@@ -941,10 +941,10 @@
     "clients_24": 1,
     "clients_5": null,
     "clients_6": null,
-    "network": "SCHOOLNET-IoT",
+    "network": "EDNET-IoT",
     "site": "sample",
     "site_type": "es",
-    "ssid": "SCHOOLNET-IoT",
+    "ssid": "EDNET-IoT",
     "ssid_aps": null,
     "wlc_name": "es-sample-w1",
     "wlc_vendor": "cisco9800"
@@ -954,10 +954,10 @@
     "clients_24": 6,
     "clients_5": 131,
     "clients_6": null,
-    "network": "SCHOOLNET",
+    "network": "EDNET",
     "site": "sample",
     "site_type": "es",
-    "ssid": "SCHOOLNET",
+    "ssid": "EDNET",
     "ssid_aps": null,
     "wlc_name": "es-sample-w1",
     "wlc_vendor": "cisco9800"
@@ -967,10 +967,10 @@
     "clients_24": 1,
     "clients_5": 2,
     "clients_6": null,
-    "network": "SCHOOLNET-Guest",
+    "network": "EDNET-Guest",
     "site": "sample",
     "site_type": "es",
-    "ssid": "SCHOOLNET-Guest",
+    "ssid": "EDNET-Guest",
     "ssid_aps": null,
     "wlc_name": "es-sample-w1",
     "wlc_vendor": "cisco9800"
@@ -1024,9 +1024,9 @@
  },
  "other_name": [
   [
-   "2164_AP49",
+   "1001_AP49",
    "26",
-   "2164_AP26"
+   "1001_AP26"
   ],
   [
    "AP008",
@@ -1039,7 +1039,7 @@
    "AP7"
   ],
   [
-   "2164_AP49",
+   "1001_AP49",
    "Lobby_AP",
    "Lobby_AP"
   ],
@@ -1049,9 +1049,9 @@
    "12"
   ],
   [
-   "7761_AP14",
+   "1002_AP14",
    "140",
-   "7761_AP140"
+   "1002_AP140"
   ]
  ]
 }

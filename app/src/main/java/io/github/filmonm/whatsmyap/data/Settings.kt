@@ -44,7 +44,7 @@ class Settings(context: Context) {
         get() = raw("internet_order").ifBlank { INTERNET_ORDER }.split(',', ' ')
             .map { it.trim().lowercase() }.filter { it in ENGINES }.distinct().ifEmpty { INTERNET_ORDER.split(',') }
 
-    /** Local test server ("10.20.30.40" or "10.20.30.40:8080"), e.g. the Pi in the site's MDF. Blank = none. */
+    /** Local test server ("192.0.2.10" or "192.0.2.10:8080"), e.g. the Pi in the site's MDF. Blank = none. */
     val localServer get() = raw("local_server")
 
     /** host:port for the local server, default port added. */

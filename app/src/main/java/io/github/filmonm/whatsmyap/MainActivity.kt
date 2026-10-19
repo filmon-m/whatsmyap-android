@@ -24,6 +24,7 @@ import io.github.filmonm.whatsmyap.ui.NetEngScreen
 import io.github.filmonm.whatsmyap.ui.NetEngViewModel
 import io.github.filmonm.whatsmyap.ui.ReportScreen
 import io.github.filmonm.whatsmyap.ui.SettingsScreen
+import io.github.filmonm.whatsmyap.ui.VerifyScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,10 +59,11 @@ fun App(activity: ComponentActivity) {
         composable("results") { ReportScreen(field, onBack = { nav.popBackStack() }, all = true) }
         composable("neteng") {
             NetEngScreen(neteng, onInspect = { nav.navigate("inspect") }, onDebugAp = { nav.navigate("debugap") },
-                onDebugWlc = { nav.navigate("debugwlc") }, onBack = { nav.popBackStack() })
+                onDebugWlc = { nav.navigate("debugwlc") }, onVerify = { nav.navigate("verify") }, onBack = { nav.popBackStack() })
         }
         composable("inspect") { InspectScreen(neteng, field, onCamera = { nav.navigate("camera") }, onBack = { nav.popBackStack() }) }
         composable("debugap") { DebugApScreen(neteng, field, onBack = { nav.popBackStack() }) }
         composable("debugwlc") { DebugWlcScreen(neteng, field, onBack = { nav.popBackStack() }) }
+        composable("verify") { VerifyScreen(neteng, onBack = { nav.popBackStack() }) }
     }
 }

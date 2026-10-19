@@ -198,7 +198,7 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                 Column {
                     Text("Everything you check from now on also goes into this survey's own file, packed into one zip at the end.")
                     OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true,
-                        label = { Text("Name, e.g. Braddock_Wifi_Tests") })
+                        label = { Text("Name, e.g. Maple_Wifi_Tests") })
                 }
             },
             confirmButton = { TextButton(onClick = { vm.startSurvey(name); askName = false }, enabled = name.isNotBlank()) { Text("Start") } },

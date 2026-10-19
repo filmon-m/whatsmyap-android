@@ -2,7 +2,7 @@ package io.github.filmonm.whatsmyap.wlc
 
 /** What a driver needs from the SSH session (a fake one answers from captures in the tests). */
 interface Runner {
-    /** Controller name from its prompt, e.g. es-braddockdrive-w1. */
+    /** Controller name from its prompt, e.g. es-maple-w1. */
     val name: String
     /** Run a show command; throws if the session is gone. */
     fun run(cmd: String): String
@@ -42,6 +42,8 @@ abstract class Driver(val s: Runner) {
     abstract fun apLink(ap: String): Link?
     abstract fun wlcSummary(): Facts
     abstract fun apHealth(ap: String): Facts
+    /** BSSID -> AP for the whole controller (Verify a survey). */
+    abstract fun bssTable(): BssTable
     /** How many commands apHealth + apLink send (for the progress bar). */
     abstract val apHealthCommands: Int
 
@@ -79,6 +81,7 @@ class Cisco9800(s: Runner) : Driver(s) {
     }
 
     override fun wlcSummary(): Facts = CiscoHealth.collect(s::tryRun)
+    override fun bssTable(): BssTable = BssTable.cisco(s.run("show ap summary"))
     override fun apHealth(ap: String): Facts = CiscoAp.collect(s::tryRun, ap)
 
     // keep ALL "AP Name" lines - they mark where each AP's block ends
@@ -136,6 +139,7 @@ class Aruba8(s: Runner) : Driver(s) {
     }
 
     override fun wlcSummary(): Facts = ArubaHealth.collect(s::tryRun)
+    override fun bssTable(): BssTable = BssTable.aruba(s.tryRun("show ap bss-table") ?: "")
     override fun apHealth(ap: String): Facts = ArubaAp.collect(s::tryRun, ap)
 
     override fun apLink(ap: String): Link? {

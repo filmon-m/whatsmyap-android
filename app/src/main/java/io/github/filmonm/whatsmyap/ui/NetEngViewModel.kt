@@ -17,7 +17,10 @@ import io.github.filmonm.whatsmyap.wlc.HostKeyChanged
 import io.github.filmonm.whatsmyap.wlc.Link
 import io.github.filmonm.whatsmyap.wlc.LoginRejected
 import io.github.filmonm.whatsmyap.wlc.Parse
+import io.github.filmonm.whatsmyap.wlc.BssTable
 import io.github.filmonm.whatsmyap.wlc.Row
+import io.github.filmonm.whatsmyap.wlc.Verify
+import io.github.filmonm.whatsmyap.wlc.VerifyItem
 import io.github.filmonm.whatsmyap.wlc.WlcSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -28,7 +31,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import android.net.Uri
+import io.github.filmonm.whatsmyap.data.CsvLog
+import java.io.File
 import java.text.SimpleDateFormat
+import java.util.zip.ZipInputStream
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
@@ -56,6 +63,8 @@ data class ApResult(
 
 data class WlcResult(val facts: Facts, val rows: List<Row>, val overall: String?, val time: String)
 
+data class VerifyResult(val survey: String, val items: List<VerifyItem>, val wlcAps: Int, val time: String, val csv: File?)
+
 data class NetEngState(
     val host: String = "",
     val recent: List<String> = emptyList(),
@@ -70,6 +79,7 @@ data class NetEngState(
     val ap: ApResult? = null,
     val apNotFound: String? = null,
     val wlc: WlcResult? = null,
+    val verify: VerifyResult? = null,
     val logged: String? = null,
 )
 
@@ -90,6 +100,7 @@ class NetEngViewModel(app: Application) : AndroidViewModel(app) {
     lateinit var field: FieldViewModel
 
     private var session: WlcSession? = null
+    private var bss: Pair<Long, BssTable>? = null           // controller's BSSID table, cached a few minutes
     private var driver: Driver? = null
     private var login: Pair<String, String>? = null
     private val wlcLock = Mutex()
@@ -167,6 +178,7 @@ class NetEngViewModel(app: Application) : AndroidViewModel(app) {
         val s = session
         session = null
         driver = null
+        bss = null
         if (s != null) viewModelScope.launch(Dispatchers.IO) { s.close() }
     }
 
@@ -241,10 +253,19 @@ class NetEngViewModel(app: Application) : AndroidViewModel(app) {
         try {
             val (w, c) = findMine(d)
             wifi = w; client = c
-            if (c == null) error = "${w.ip} not found on ${d.name}"
-            else if (!c.ap.isNullOrEmpty()) {
+            if (c == null && w.bssid.isNotEmpty()) {          // IP not listed: which AP owns the BSSID we're on?
+                busy("IP not listed - looking up the BSSID")
+                bssTable(d).find(w.bssid)?.let { hit ->
+                    client = Client(ap = hit.ap, bssid = w.bssid, band = hit.band, channel = "", rssiWlc = null, snrWlc = null,
+                        ssid = hit.ssid, apIp = "", state = "via BSSID", raw = null)
+                    error = "${w.ip} isn't in the WLC's client list - AP found from the BSSID instead"
+                }
+            }
+            val c2 = client
+            if (c2 == null) error = "${w.ip} not found on ${d.name}"
+            else if (!c2.ap.isNullOrEmpty()) {
                 busy("Checking AP uplink")
-                link = runCatching { withContext(Dispatchers.IO) { d.apLink(c.ap) } }.getOrNull()   // never let it break the result
+                link = runCatching { withContext(Dispatchers.IO) { d.apLink(c2.ap) } }.getOrNull()   // never let it break the result
             }
         } catch (e: IllegalStateException) {
             error = e.message
@@ -349,6 +370,54 @@ class NetEngViewModel(app: Application) : AndroidViewModel(app) {
         val logRows = Health.wlcLogRows(d.name, d.vendor, f, rows, overall)
         field.write(logRows.map { stamp(it, "debugmywlc", runId) })
         _state.update { it.copy(logged = "Logged ${logRows.size} rows") }
+    }
+
+    // ------------------------------------------------------------------ Verify a survey
+    private suspend fun bssTable(d: Driver): BssTable {
+        bss?.takeIf { System.currentTimeMillis() - it.first < 10 * 60_000 }?.let { return it.second }
+        busy("Reading the WLC's BSSID table (large on big controllers)")
+        val t = withContext(Dispatchers.IO) { d.bssTable() }
+        if (t.isEmpty) throw IllegalStateException("The WLC returned no BSSIDs - see WLC output (raw)")
+        bss = System.currentTimeMillis() to t
+        return t
+    }
+
+    /** Surveys saved on this tablet (newest first). */
+    fun localSurveys(): List<String> = Storage.surveys(ctx).listFiles { f -> f.isDirectory && File(f, "${f.name}.csv").exists() }
+        .orEmpty().sortedByDescending { File(it, "${it.name}.csv").lastModified() }.map { it.name }
+
+    fun verifyLocal(name: String) = verify { name to CsvLog.read(File(File(Storage.surveys(ctx), name), "$name.csv")) }
+
+    /** A survey zip from another tablet (part 1 holds the CSV). */
+    fun verifyZip(uri: Uri) = verify {
+        ctx.contentResolver.openInputStream(uri)!!.use { ins ->
+            ZipInputStream(ins).use { z ->
+                val e = generateSequence { z.nextEntry }.firstOrNull { e ->
+                    !e.isDirectory && e.name.endsWith(".csv") && !e.name.substringAfterLast('/').startsWith("whatsmyap_")
+                } ?: throw IllegalStateException("No survey CSV in that zip - pick part 1 of a survey zip")
+                val rows = CsvLog.parse(z.readBytes().toString(Charsets.UTF_8))
+                val header = rows.firstOrNull() ?: emptyList()
+                e.name.substringAfterLast('/').removeSuffix(".csv") to
+                    rows.drop(1).filter { it.size > 1 }.map { r -> header.mapIndexed { i, h -> h to (r.getOrNull(i) ?: "") }.toMap() }
+            }
+        }
+    }
+
+    /** [load] -> (survey name, its rows); runs off the main thread. */
+    private fun verify(load: () -> Pair<String, List<Map<String, String>>>) = work("Reading the survey") {
+        val d = requireDriver()
+        val (name, rows) = withContext(Dispatchers.IO) { load() }
+        if (rows.none { !it["bssid"].isNullOrBlank() }) throw IllegalStateException("$name has no BSSIDs to check")
+        val table = bssTable(d)
+        busy("Matching ${rows.size} rows")
+        val items = Verify.run(rows, table)
+        val runId = UUID.randomUUID().toString().take(13)
+        val stamped = Verify.logRows(name, items, d.name, d.vendor).map { stamp(it, "verify", runId) }
+        field.write(stamped, toSurvey = false)
+        val csv = withContext(Dispatchers.IO) {
+            File(Storage.share(ctx), "${name}_verified.csv").apply { delete(); CsvLog.write(this, stamped) }
+        }
+        _state.update { it.copy(verify = VerifyResult(name, items, table.aps, now(), csv), logged = "Logged ${items.size} rows") }
     }
 
     private fun stamp(row: Map<String, Any?>, module: String, runId: String): Map<String, Any?> = linkedMapOf<String, Any?>(

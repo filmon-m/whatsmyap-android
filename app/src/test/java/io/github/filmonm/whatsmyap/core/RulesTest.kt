@@ -7,7 +7,7 @@ import org.junit.Test
 
 class LabelsTest {
     @Test fun parsesCommonLabelForms() {
-        val r = Labels.parse("AP-O8 aP14 2164_AP026 APOLLO MAP-5 AP 3").map { it.number }
+        val r = Labels.parse("AP-O8 aP14 1001_AP026 APOLLO MAP-5 AP 3").map { it.number }
         assertEquals(listOf(8, 14, 26, 3), r)
     }
 
@@ -22,9 +22,9 @@ class LabelsTest {
     }
 
     @Test fun apNumberFromWlcNames() {
-        assertEquals(14, Labels.apNumber("7761_AP14"))
+        assertEquals(14, Labels.apNumber("1002_AP14"))
         assertEquals(8, Labels.apNumber("AP008"))
-        assertEquals(26, Labels.apNumber("2164_AP26"))
+        assertEquals(26, Labels.apNumber("1001_AP26"))
         assertNull(Labels.apNumber(""))
     }
 
@@ -72,6 +72,6 @@ class RulesTest {
     @Test fun siteNames() {
         assertEquals("vultr-lax", Rules.siteName("http://lax-ca-us-ping.vultr.com/vultr.com.1000MB.bin"))
         assertEquals("vultr-wa", Rules.siteName("http://wa-us-ping.vultr.com/x.bin"))
-        assertEquals("10.1.2.3", Rules.siteName("http://10.1.2.3:8080/file"))
+        assertEquals("192.0.2.3", Rules.siteName("http://192.0.2.3:8080/file"))
     }
 }

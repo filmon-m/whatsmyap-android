@@ -3,7 +3,7 @@ package io.github.filmonm.whatsmyap.core
 /**
  * AP label rules (ported from the prototype, ocr.py / parse.py).
  *
- * Labels are matched on the number after "AP" only: AP-08 = AP008 = 2164_AP8 = 8.
+ * Labels are matched on the number after "AP" only: AP-08 = AP008 = 1001_AP8 = 8.
  */
 object Labels {
 
@@ -29,7 +29,7 @@ object Labels {
             digits.toIntOrNull()?.let { Reading(it, m.value.trim()) }
         }.toList()
 
-    /** Number after "AP" in an AP name: 7761_AP14 -> 14, AP008 -> 8; else the last digits. */
+    /** Number after "AP" in an AP name: 1002_AP14 -> 14, AP008 -> 8; else the last digits. */
     fun apNumber(name: String?): Int? {
         if (name.isNullOrBlank()) return null
         Regex("AP[\\s_\\-]*(\\d+)", RegexOption.IGNORE_CASE).findAll(name).lastOrNull()

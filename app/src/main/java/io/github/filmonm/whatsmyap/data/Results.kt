@@ -22,6 +22,7 @@ object Results {
             put("thresholds", JSONObject(Rules.thresholds as Map<*, *>))
             put("limits", JSONObject().put("teams", JSONObject().put("rtt_ms", Rules.teamsRttMs).put("jitter_ms", Rules.teamsJitterMs)))
             put("photoDir", "photos")
+            Branding.dataUrl(context)?.let { put("logo", it) }
         }
         val data = embed.toString().replace("</", "<\\/")
         return page.replaceFirst("<script>", "<script>window.EMBED = $data;</script>\n<script>")

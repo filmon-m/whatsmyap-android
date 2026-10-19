@@ -97,7 +97,7 @@ fun Facts.compact(): Facts = filterTo(linkedMapOf()) { (_, v) -> v != null && v 
 
 object Parse {
 
-    /** Number after 'AP' in the AP name: 7761_AP14 -> 14, AP008 -> 8, AP-08 -> 8. */
+    /** Number after 'AP' in the AP name: 1002_AP14 -> 14, AP008 -> 8, AP-08 -> 8. */
     fun apNumber(name: String?): Int? = io.github.filmonm.whatsmyap.core.Labels.apNumber(name)
 
     /** 'Key : value' lines -> map (first occurrence wins, keys lower-cased). */

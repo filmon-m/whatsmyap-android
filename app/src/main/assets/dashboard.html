@@ -37,6 +37,7 @@ header { position: sticky; top: 0; z-index: 5; background: var(--page);
 header .wrap { display: flex; align-items: center; gap: 12px; padding-top: 12px; padding-bottom: 8px;
   flex-wrap: wrap; }
 h1 { font-size: 20px; margin: 0; font-weight: 650; }
+img.brand { height: 40px; width: auto; border-radius: 6px; background: #fff; padding: 2px 6px; }
 .live { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; }
 .live.off i { background: var(--muted); }
@@ -744,6 +745,7 @@ if (EMBED) {
   if (EMBED.limits) for (const k in EMBED.limits) S.limits[k] = Object.assign({}, S.limits[k], EMBED.limits[k]);
   S.rows = placeSites(linkByBssid(EMBED.rows.map(normalize)));
   document.title = `${EMBED.name} · What's My AP`;
+  if (EMBED.logo) document.querySelector("header h1").before(el("img", { class: "brand", src: EMBED.logo, alt: "" }));
   setLive(false, `${EMBED.label || "survey " + EMBED.name} · v${EMBED.version}`);
   render();
 }

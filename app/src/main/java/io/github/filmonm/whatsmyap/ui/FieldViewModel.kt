@@ -253,9 +253,9 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
-    /** Rows to this month's log, and to the running survey's file when there is one. */
-    fun write(rows: List<Map<String, Any?>>) {
-        val name = survey.active
+    /** Rows to this month's log, and to the running survey's file when there is one (and [toSurvey]). */
+    fun write(rows: List<Map<String, Any?>>, toSurvey: Boolean = true) {
+        val name = survey.active?.takeIf { toSurvey }
         viewModelScope.launch(Dispatchers.IO) {
             CsvLog.write(File(Storage.logs(ctx), "whatsmyap_${Storage.month()}.csv"), rows)
             if (name != null) CsvLog.write(survey.csv(name), rows.map { it + ("survey" to name) })

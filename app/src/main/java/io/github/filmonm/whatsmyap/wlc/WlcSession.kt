@@ -174,13 +174,15 @@ class WlcSession(
         while (i.available() > 0) i.read(ByteArray(i.available()))
     }
 
-    /** Read until [done] says so, the WLC goes quiet after looking finished, or the time runs out. */
+    /**
+     * Read until [done] (shown the cleaned tail of the output) says so, or the time runs out.
+     * Only the tail is cleaned while reading, so a 7,000-line table doesn't get re-processed per chunk.
+     */
     private fun readUntil(timeoutMs: Long, done: (String) -> Boolean): String {
         val i = input ?: throw IllegalStateException("not connected")
         val raw = StringBuilder()
-        val buf = ByteArray(16_384)
+        val buf = ByteArray(32_768)
         val end = System.currentTimeMillis() + timeoutMs
-        var text = ""
         while (System.currentTimeMillis() < end) {
             if (shell?.isClosed == true) throw java.io.IOException("WLC closed the session")
             val n = i.available()
@@ -188,17 +190,17 @@ class WlcSession(
                 val r = i.read(buf, 0, minOf(n, buf.size))
                 if (r > 0) {
                     raw.append(String(buf, 0, r, Charsets.UTF_8))
-                    text = Cli.clean(raw.toString())
-                    if (text.trimEnd().endsWith("--More--") || text.endsWith("--More-- ")) {   // paging left on: keep going
+                    val tail = Cli.clean(raw.substring(maxOf(0, raw.length - 4_000)))
+                    if (tail.trimEnd().endsWith("--More--")) {          // paging left on: keep going
                         output?.apply { write(" ".toByteArray()); flush() }
                     }
-                    if (done(text)) return text
+                    if (done(tail)) return Cli.clean(raw.toString())
                     continue
                 }
             }
             Thread.sleep(40)
         }
-        return text
+        return Cli.clean(raw.toString())
     }
 
     private fun exchange(cmd: String): String {

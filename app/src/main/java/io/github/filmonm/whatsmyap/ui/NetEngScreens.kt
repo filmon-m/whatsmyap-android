@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.filmonm.whatsmyap.core.Rules
 import io.github.filmonm.whatsmyap.data.SpeedTest
 import io.github.filmonm.whatsmyap.wlc.Health
+import io.github.filmonm.whatsmyap.wlc.Verify
 import io.github.filmonm.whatsmyap.wlc.Row as HealthRow
 
 private fun colorOf(status: String?) = when (status) {
@@ -151,7 +152,7 @@ private fun Overall(overall: String?, rows: List<HealthRow>) {
 // ==================================================================================== hub + login
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Unit, onDebugWlc: () -> Unit, onBack: () -> Unit) {
+fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Unit, onDebugWlc: () -> Unit, onVerify: () -> Unit, onBack: () -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
     Screen("Network Engineer", onBack, back = "‹ Home") {
         if (s.wlcName == null) {
@@ -166,13 +167,7 @@ fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Un
             Tile("Inspect", "Which AP am I on? Compare it with the label, photo and speed.", onInspect)
             Tile("Debug my AP", "Health of the AP you're under (or any AP by name or number).", onDebugAp)
             Tile("Debug my WLC", "Controller health: CPU, memory, uplinks, APs down, clients.", onDebugWlc)
-            OutlinedCard(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Verify a survey", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Check a field survey's BSSIDs against this WLC. Coming next - needs one BSSID-to-AP capture per vendor.",
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+            Tile("Verify a survey", "Check a field survey's labels against this WLC - from this tablet or a survey zip.", onVerify)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = vm::lock) { Text("Lock") }
                 TextButton(onClick = vm::forgetLogin) { Text("Forget saved login") }
@@ -430,5 +425,73 @@ fun DebugWlcScreen(vm: NetEngViewModel, field: FieldViewModel, onBack: () -> Uni
             Text("Checked ${w.time}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         TranscriptButton(vm)
+    }
+}
+
+// ==================================================================================== Verify a survey
+@Composable
+fun VerifyScreen(vm: NetEngViewModel, onBack: () -> Unit) {
+    val s by vm.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val surveys = remember { vm.localSurveys() }
+    val pickZip = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::verifyZip) }
+    Screen("Verify a survey", onBack) {
+        Text("Every BSSID the survey recorded is looked up on ${s.wlcName}, and the AP number the WLC gives is compared " +
+            "with the label (the photo's OCR first, then the typed number).", style = MaterialTheme.typography.bodySmall)
+        if (surveys.isNotEmpty()) {
+            Text("On this tablet:", fontWeight = FontWeight.SemiBold)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                surveys.forEach { n -> AssistChip(onClick = { vm.verifyLocal(n) }, enabled = s.busy == null, label = { Text(n) }) }
+            }
+        }
+        OutlinedButton(onClick = { pickZip.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
+            enabled = s.busy == null) { Text("Open a survey zip...") }
+        Status(vm, s)
+        s.verify?.let { v ->
+            val counts = Verify.ORDER.associateWith { k -> v.items.count { it.verdict == k } }.filterValues { it > 0 }
+            Text(v.survey, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(counts.entries.joinToString(" · ") { "${it.value} ${it.key.lowercase()}" } +
+                "  (WLC knows ${v.wlcAps} APs)", style = MaterialTheme.typography.bodyMedium)
+            for (item in v.items) VerifyCard(item)
+            v.csv?.let { f ->
+                OutlinedButton(onClick = {
+                    val uri = androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".files", f)
+                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                        type = "text/csv"; putExtra(Intent.EXTRA_STREAM, uri); putExtra(Intent.EXTRA_SUBJECT, "Survey ${v.survey} verified")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }, "Share results"))
+                }) { Text("Share results (CSV)") }
+            }
+            Text("Checked ${v.time}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        TranscriptButton(vm)
+    }
+}
+
+@Composable
+private fun VerifyCard(v: io.github.filmonm.whatsmyap.wlc.VerifyItem) {
+    val color = when (v.verdict) {
+        "VERIFIED", "CONFIRMED" -> Good
+        "MISMATCH" -> Bad
+        else -> Warn
+    }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(v.verdict, color = color, fontWeight = FontWeight.Bold)
+                Text(v.hit?.ap?.let { ap -> "WLC: $ap" + (v.wlcNumber?.let { " (#$it)" } ?: "") } ?: "not on this WLC",
+                    fontWeight = FontWeight.SemiBold)
+            }
+            val label = listOfNotNull(
+                v.ocr?.let { "photo reads ${v.ocrLabel ?: "#$it"}" },
+                v.typed?.let { "typed #$it" },
+            ).joinToString(" · ").ifEmpty { "no label recorded" }
+            Text("Label: $label")
+            Text(listOfNotNull("BSSID ${v.bssid}", v.ssid.ifEmpty { null }, v.hit?.how?.takeIf { it == "radio" }?.let { "matched by radio MAC" })
+                .joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+            Text(listOfNotNull(v.firstSeen, count(v.checks, "check"), v.photo, v.hit?.location?.ifEmpty { null } ?: v.place)
+                .joinToString(" · "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

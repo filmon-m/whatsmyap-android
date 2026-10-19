@@ -25,6 +25,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.filmonm.whatsmyap.data.Settings
+import io.github.filmonm.whatsmyap.data.Branding
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 
 /** The prototype's settings.ini as a screen. Blank = default (shown greyed in each field). */
 @Composable
@@ -48,6 +61,12 @@ fun SettingsScreen(vm: FieldViewModel, onBack: () -> Unit) {
     }
 
     fun num(d: Double) = if (d == d.toLong().toDouble()) d.toLong().toString() else d.toString()
+
+    val context = LocalContext.current
+    var logo by remember { mutableStateOf(Branding.bitmap(context)?.asImageBitmap()) }
+    val pickLogo = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null && Branding.set(context, uri)) logo = Branding.bitmap(context)?.asImageBitmap()
+    }
 
     Surface(Modifier.fillMaxSize()) {
         Column(
@@ -81,7 +100,21 @@ fun SettingsScreen(vm: FieldViewModel, onBack: () -> Unit) {
             Text("The site's own test server, e.g. the Pi in the MDF, running M-Lab's ndt-server. " +
                 "IP address, optionally :port (default ${Settings.LOCAL_PORT}). When set, Speed test asks local or internet.",
                 style = MaterialTheme.typography.bodySmall)
-            field("local_server", "IP address[:port]", "e.g. 10.20.30.40", number = false)
+            field("local_server", "IP address[:port]", "e.g. 192.0.2.10", number = false)
+
+            Text("Logo (optional)", style = MaterialTheme.typography.titleMedium)
+            Text("Shown on the home screen and at the top of survey reports and Results. " +
+                "Stored only on this tablet.", style = MaterialTheme.typography.bodySmall)
+            logo?.let {
+                Surface(color = Color.White, shape = RoundedCornerShape(8.dp)) {
+                    Image(it, contentDescription = "Logo", contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 64.dp).padding(6.dp))
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { pickLogo.launch("image/*") }) { Text(if (logo == null) "Choose image" else "Change") }
+                if (logo != null) TextButton(onClick = { Branding.clear(context); logo = null }) { Text("Remove") }
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = {

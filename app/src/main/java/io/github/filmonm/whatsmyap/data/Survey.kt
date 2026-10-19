@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * Survey mode: a named job (e.g. Braddock_Wifi_Tests) with its own clean CSV, packaged as
+ * Survey mode: a named job (e.g. Maple_Wifi_Tests) with its own clean CSV, packaged as
  * zip(s) to share. Survives app restarts until finished.
  *
  *   <name>/<name>.csv     this survey's checks only

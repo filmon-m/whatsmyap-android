@@ -95,7 +95,7 @@ class WlcParityTest {
     }
 
     @Test fun apHealth() {
-        for (name in listOf("cisco_ap_health_2164_AP49", "aruba_ap_health_AP14", "cisco_ap_health_2164_AP99")) {
+        for (name in listOf("cisco_ap_health_1001_AP49", "aruba_ap_health_AP14", "cisco_ap_health_1001_AP99")) {
             val c = case(name)
             val vendor = c["vendor"] as String
             val fake = Fake(vendor, c["wlc"] as String)
@@ -115,7 +115,7 @@ class WlcParityTest {
     }
 
     @Test fun ciscoDot11() = same("dot11", case("cisco_dot11_24")["result"],
-        CiscoAp.dot11(commands.getValue("cisco").getValue("show ap name 2164_AP85 config dot11 24ghz")))
+        CiscoAp.dot11(commands.getValue("cisco").getValue("show ap name 1001_AP85 config dot11 24ghz")))
 
     @Test fun wlcHealth() {
         for (vendor in listOf("cisco", "aruba")) {

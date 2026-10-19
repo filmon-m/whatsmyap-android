@@ -65,14 +65,14 @@ object Health {
 
     fun bandLabel(b: String?) = if (b.isNullOrEmpty()) "?" else "$b GHz"
 
-    /** es-braddockdrive-w1 -> (braddockdrive, es). Unrecognized names keep the whole name as site. */
+    /** es-maple-w1 -> (maple, es). Unrecognized names keep the whole name as site. */
     fun parseWlcName(name: String?): Pair<String, String> {
         val n = (name ?: "").trim()
         val m = rx("""^([a-z]{2,4})-(.+?)(?:-w\d+)?$""", "i").find(n) ?: return n to ""
         return m.groupValues[2].lowercase() to m.groupValues[1].lowercase()
     }
 
-    /** '26' while on 2164_AP49 -> 2164_AP26 (same prefix and zero padding); names pass through. */
+    /** '26' while on 1001_AP49 -> 1001_AP26 (same prefix and zero padding); names pass through. */
     fun otherName(current: String?, typedIn: String): String {
         val typed = typedIn.trim()
         if (!fullmatch("""\d+""", typed) || current.isNullOrEmpty()) return typed
