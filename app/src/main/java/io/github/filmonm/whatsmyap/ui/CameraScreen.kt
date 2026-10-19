@@ -1,7 +1,15 @@
 package io.github.filmonm.whatsmyap.ui
 
 import androidx.annotation.OptIn
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
@@ -52,12 +60,42 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
     var live by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    val capture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
+    val capture = remember {
+        ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+            .setFlashMode(ImageCapture.FLASH_MODE_AUTO).build()
+    }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+    var zoom by remember { mutableFloatStateOf(0f) }               // 0..1 across the camera's zoom range
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
+    var flash by remember { mutableIntStateOf(ImageCapture.FLASH_MODE_AUTO) }
+    var torch by remember { mutableStateOf(false) }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
     val lastAnalysis = remember { longArrayOf(0L) }
 
     val previewView = remember {
         PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
+    }
+
+    // pinch to zoom, tap to focus
+    DisposableEffect(previewView) {
+        val pinch = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(d: ScaleGestureDetector): Boolean {
+                val c = camera ?: return true
+                val z = c.cameraInfo.zoomState.value ?: return true
+                c.cameraControl.setZoomRatio((z.zoomRatio * d.scaleFactor).coerceIn(z.minZoomRatio, z.maxZoomRatio))
+                return true
+            }
+        })
+        previewView.setOnTouchListener { v, e ->
+            pinch.onTouchEvent(e)
+            if (e.actionMasked == MotionEvent.ACTION_UP && !pinch.isInProgress && e.eventTime - e.downTime < 300) {
+                val point = previewView.meteringPointFactory.createPoint(e.x, e.y)
+                camera?.cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(point).build())
+                v.performClick()
+            }
+            true
+        }
+        onDispose { previewView.setOnTouchListener(null) }
     }
 
     DisposableEffect(Unit) {
@@ -80,7 +118,9 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
             }
             try {
                 provider.unbindAll()
-                provider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture, analysis)
+                camera = provider.bindToLifecycle(owner, CameraSelector.DEFAULT_BACK_CAMERA, preview, capture, analysis).also { c ->
+                    c.cameraInfo.zoomState.observe(owner) { z -> zoom = z.linearZoom; zoomRatio = z.zoomRatio }
+                }
             } catch (e: Exception) {
                 error = "Camera unavailable: ${e.message}"
             }
@@ -113,6 +153,28 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+        // flash for the photo, and a steady light for dark rooms (also helps focus and the live reading)
+        if (camera?.cameraInfo?.hasFlashUnit() == true) {
+            Row(
+                Modifier.align(Alignment.TopEnd).safeDrawingPadding().padding(12.dp).background(Color(0xAA000000)),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                TextButton(onClick = {
+                    flash = when (flash) {
+                        ImageCapture.FLASH_MODE_AUTO -> ImageCapture.FLASH_MODE_ON
+                        ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_OFF
+                        else -> ImageCapture.FLASH_MODE_AUTO
+                    }
+                    capture.flashMode = flash
+                }) {
+                    Text("Flash: " + when (flash) { ImageCapture.FLASH_MODE_ON -> "On"; ImageCapture.FLASH_MODE_OFF -> "Off"; else -> "Auto" },
+                        color = Color.White)
+                }
+                TextButton(onClick = { torch = !torch; camera?.cameraControl?.enableTorch(torch) }) {
+                    Text(if (torch) "Light: On" else "Light: Off", color = if (torch) Color(0xFFFFD54F) else Color.White)
+                }
+            }
+        }
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color(0xAA000000)).safeDrawingPadding().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -124,6 +186,11 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
             )
             error?.let { Text(it, color = Bad) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Zoom %.1fx".format(zoomRatio), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                Slider(value = zoom, onValueChange = { zoom = it; camera?.cameraControl?.setLinearZoom(it) }, modifier = Modifier.weight(1f))
+            }
+            Text("Pinch to zoom, tap to focus", color = Color(0xFFBBBBBB), style = MaterialTheme.typography.labelSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { take() }, enabled = !busy) { Text(if (busy) "Saving..." else "Take photo") }
                 OutlinedButton(onClick = onDone) { Text("Cancel", color = Color.White) }
