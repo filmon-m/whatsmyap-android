@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.filmonm.whatsmyap.BuildConfig
 import io.github.filmonm.whatsmyap.core.Labels
 import io.github.filmonm.whatsmyap.data.Creds
+import io.github.filmonm.whatsmyap.data.SiteLists
 import io.github.filmonm.whatsmyap.data.Storage
 import io.github.filmonm.whatsmyap.data.WifiState
 import io.github.filmonm.whatsmyap.data.WlcMemory
@@ -80,6 +81,7 @@ data class NetEngState(
     val apNotFound: String? = null,
     val wlc: WlcResult? = null,
     val verify: VerifyResult? = null,
+    val siteList: File? = null,
     val logged: String? = null,
 )
 
@@ -380,6 +382,16 @@ class NetEngViewModel(app: Application) : AndroidViewModel(app) {
         if (t.isEmpty) throw IllegalStateException("The WLC returned no BSSIDs - see WLC output (raw)")
         bss = System.currentTimeMillis() to t
         return t
+    }
+
+    /** The controller's BSSID table as a site AP list for testers without a WLC login. */
+    fun saveSiteList() = work("Starting") {
+        val d = requireDriver()
+        bss = null                                     // always fresh for a list others will rely on
+        val table = bssTable(d)
+        val f = withContext(Dispatchers.IO) { SiteLists.save(ctx, d.name, d.vendor, table) }
+        field.refreshWifi()
+        _state.update { it.copy(siteList = f, logged = "Saved site list ${d.name}: ${table.aps} APs") }
     }
 
     /** Surveys saved on this tablet (newest first). */

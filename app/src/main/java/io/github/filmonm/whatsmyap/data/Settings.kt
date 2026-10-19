@@ -44,6 +44,11 @@ class Settings(context: Context) {
         get() = raw("internet_order").ifBlank { INTERNET_ORDER }.split(',', ' ')
             .map { it.trim().lowercase() }.filter { it in ENGINES }.distinct().ifEmpty { INTERNET_ORDER.split(',') }
 
+    /** Show the AP from loaded site lists while surveying (off for vendor tablets). */
+    var siteListLive: Boolean
+        get() = p.getString("sitelist_live", "1") != "0"
+        set(v) { p.edit().putString("sitelist_live", if (v) "1" else "0").apply() }
+
     /** Local test server ("192.0.2.10" or "192.0.2.10:8080"), e.g. the Pi in the site's MDF. Blank = none. */
     val localServer get() = raw("local_server")
 

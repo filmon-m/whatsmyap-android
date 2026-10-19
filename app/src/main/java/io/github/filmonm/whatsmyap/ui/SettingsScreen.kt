@@ -26,6 +26,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.filmonm.whatsmyap.data.Settings
 import io.github.filmonm.whatsmyap.data.Branding
+import io.github.filmonm.whatsmyap.data.SiteLists
+import androidx.compose.material3.Switch
+import androidx.compose.ui.text.font.FontWeight
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -64,6 +67,16 @@ fun SettingsScreen(vm: FieldViewModel, onBack: () -> Unit) {
 
     val context = LocalContext.current
     var logo by remember { mutableStateOf(Branding.bitmap(context)?.asImageBitmap()) }
+    var live by remember { mutableStateOf(s.siteListLive) }
+    var lists by remember { mutableStateOf(SiteLists.infos(context)) }
+    var listNote by remember { mutableStateOf<String?>(null) }
+    val pickList = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val info = runCatching { SiteLists.import(context, uri) }.getOrNull()
+            listNote = if (info == null) "That file isn't a site AP list." else "Loaded ${info.name}: ${info.aps} APs"
+            lists = SiteLists.infos(context)
+        }
+    }
     val pickLogo = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null && Branding.set(context, uri)) logo = Branding.bitmap(context)?.asImageBitmap()
     }
@@ -101,6 +114,29 @@ fun SettingsScreen(vm: FieldViewModel, onBack: () -> Unit) {
                 "IP address, optionally :port (default ${Settings.LOCAL_PORT}). When set, Speed test asks local or internet.",
                 style = MaterialTheme.typography.bodySmall)
             field("local_server", "IP address[:port]", "e.g. 192.0.2.10", number = false)
+
+            Text("Site AP lists", style = MaterialTheme.typography.titleMedium)
+            Text("A list made in Network Engineer mode (Save site AP list) lets this tablet show which AP it's on " +
+                "without a WLC login. Turn the live check off on vendor tablets - their surveys are verified afterwards.",
+                style = MaterialTheme.typography.bodySmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Show the AP from site lists while surveying", Modifier.weight(1f))
+                Switch(checked = live, onCheckedChange = { live = it; s.siteListLive = it })
+            }
+            lists.forEach { info ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(info.name, fontWeight = FontWeight.SemiBold)
+                        Text("${info.aps} APs · ${info.ageDays?.let { if (it == 0L) "today" else "$it days old" } ?: "undated"}" +
+                            if ((info.ageDays ?: 0) > 90) " - consider a fresh list" else "", style = MaterialTheme.typography.bodySmall)
+                    }
+                    TextButton(onClick = { SiteLists.remove(info); lists = SiteLists.infos(context) }) { Text("Remove") }
+                }
+            }
+            listNote?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            OutlinedButton(onClick = { pickList.launch(arrayOf("text/*", "application/octet-stream", "text/csv", "text/comma-separated-values")) }) {
+                Text("Load a site list...")
+            }
 
             Text("Logo (optional)", style = MaterialTheme.typography.titleMedium)
             Text("Shown on the home screen and at the top of survey reports and Results. " +

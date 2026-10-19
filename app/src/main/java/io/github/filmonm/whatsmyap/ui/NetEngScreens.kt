@@ -168,6 +168,19 @@ fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Un
             Tile("Debug my AP", "Health of the AP you're under (or any AP by name or number).", onDebugAp)
             Tile("Debug my WLC", "Controller health: CPU, memory, uplinks, APs down, clients.", onDebugWlc)
             Tile("Verify a survey", "Check a field survey's labels against this WLC - from this tablet or a survey zip.", onVerify)
+            Tile("Save site AP list", "This WLC's BSSID-to-AP list, for testers without a WLC login. Saved here; share it to their tablets.",
+                { vm.saveSiteList() })
+            s.siteList?.let { f ->
+                val context = LocalContext.current
+                OutlinedButton(onClick = {
+                    val uri = androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".files",
+                        java.io.File(java.io.File(context.cacheDir, "share").apply { mkdirs() }, f.name).also { f.copyTo(it, overwrite = true) })
+                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                        type = "text/csv"; putExtra(Intent.EXTRA_STREAM, uri); putExtra(Intent.EXTRA_SUBJECT, "Site AP list ${f.nameWithoutExtension}")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }, "Share site list"))
+                }) { Text("Share site list ${f.nameWithoutExtension}") }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = vm::lock) { Text("Lock") }
                 TextButton(onClick = vm::forgetLogin) { Text("Forget saved login") }

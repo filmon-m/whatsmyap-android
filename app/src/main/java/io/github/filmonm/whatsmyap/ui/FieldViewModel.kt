@@ -15,6 +15,7 @@ import io.github.filmonm.whatsmyap.data.Results
 import io.github.filmonm.whatsmyap.data.SpeedProgress
 import io.github.filmonm.whatsmyap.data.SpeedResult
 import io.github.filmonm.whatsmyap.data.Settings
+import io.github.filmonm.whatsmyap.data.SiteLists
 import io.github.filmonm.whatsmyap.data.SpeedTest
 import io.github.filmonm.whatsmyap.data.Storage
 import io.github.filmonm.whatsmyap.data.Survey
@@ -51,6 +52,8 @@ data class FieldState(
     val wifiError: String? = null,
     /** Strongest radio on our SSID, when it's another AP than the one we're on. */
     val closer: WifiSource.Seen? = null,
+    /** Which AP a loaded site list says we're on (null: no list, or the live check is off). */
+    val site: SiteLists.Hit? = null,
     val place: Place? = null,
     val locating: Boolean = false,
     val tag: Int? = null,
@@ -103,8 +106,9 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         val near = w?.let { runCatching { WifiSource.nearest(ctx, it.ssid) }.getOrNull() }
         // a different AP that's clearly louder: the tablet is holding on to a farther one
         val closer = near?.takeIf { w != null && it.apKey != w.apKey && it.rssi - w.rssi >= CLOSER_DB }
+        val site = if (settings.siteListLive) w?.let { runCatching { SiteLists.find(ctx, it.bssid) }.getOrNull() } else null
         _state.update {
-            it.copy(wifi = w, closer = closer, wifiError = when {
+            it.copy(wifi = w, closer = closer, site = site, wifiError = when {
                 w == null -> "Not connected to Wi-Fi"
                 w.bssid.isEmpty() -> "Turn on Location and allow it for this app to see the AP (BSSID)"
                 else -> null
@@ -260,6 +264,12 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "ap_number" to (s.tag ?: ocrNum), "label_entered" to s.tag,
         )
         s.closer?.let { c -> row["closer_bssid"] = c.bssid; row["closer_rssi_dbm"] = c.rssi }
+        s.site?.let { h ->            // never in label_verdict: field rows don't claim the WLC's answer
+            row["sitelist_ap"] = h.hit.ap
+            row["sitelist_name"] = h.list.name
+            row["sitelist_created"] = h.list.created
+            row["sitelist_verdict"] = Labels.verdict(h.number, s.tag, ocrNum)?.name
+        }
         memory.site(w?.ip)?.let { (site, type) -> row["site"] = site; row["site_type"] = type }   // learned on WLC visits
         row.putAll(locationColumns())
         if (photo != null) {

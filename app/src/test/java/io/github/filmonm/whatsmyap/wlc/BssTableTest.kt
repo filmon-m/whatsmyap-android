@@ -44,3 +44,21 @@ class BssTableTest {
         assertTrue(t.find("02:00:00:00:00:01") == null)
     }
 }
+
+class SiteListTest {
+    @Suppress("UNCHECKED_CAST")
+    private val commands = Json.parse(javaClass.classLoader!!.getResource("wlc/commands.json")!!.readText()) as Map<String, Map<String, String>>
+
+    @Test fun roundTrip() {
+        for (t in listOf(BssTable.cisco(commands.getValue("cisco").getValue("show ap summary")),
+                         BssTable.aruba(commands.getValue("aruba").getValue("show ap bss-table")))) {
+            val (meta, back) = BssTable.fromCsv(t.toCsv("es-sample-w1", "cisco9800", "2026-10-19 08:00:00"))
+            assertEquals("es-sample-w1", meta["name"]); assertEquals("2026-10-19 08:00:00", meta["created"])
+            assertEquals(t.aps, back.aps)
+            for (b in listOf("c834.e527.fe6f", "c8:34:e5:27:fe:6f", "b4:5d:50:a8:9d:10", "e8:10:98:72:c0:01", "bc:ab:f5:9a:36:cd"))
+                assertEquals(b, t.find(b), back.find(b))
+        }
+        assertEquals("BLDG 3, CLRM 4", BssTable.fromCsv(BssTable.cisco(commands.getValue("cisco").getValue("show ap summary"))
+            .toCsv("x", "cisco9800", "now")).second.find("c8:34:e5:27:fe:6f")?.location)
+    }
+}

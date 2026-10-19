@@ -164,6 +164,17 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                         Text("RSSI:   ${w.rssi} dBm   Link rate: ${w.linkMbps ?: "?"} Mbps")
                         Text("IP:     ${w.ip}" + if (w.gateway.isNotBlank()) "   GW ${w.gateway}" else "")
                         s.wifiError?.let { Text(it, color = Warn) }
+                        s.site?.let { h ->
+                            val age = h.list.ageDays?.let { d -> if (d == 0L) "today" else "${count(d.toInt(), "day")} old" } ?: "undated"
+                            Text("Site list: ${h.hit.ap}" + (h.number?.let { " (#$it)" } ?: ""), fontWeight = FontWeight.SemiBold)
+                            Text("from ${h.list.name}, $age" + if (h.hit.how == "radio") " · matched by radio MAC" else "",
+                                style = MaterialTheme.typography.bodySmall)
+                            val typed = s.tag
+                            if (typed != null && h.number != null) {
+                                if (typed == h.number) Text("Typed label #$typed matches", color = Good)
+                                else Text("Typed label #$typed \u2260 site list #${h.number} - check the label", color = Bad, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
                         s.closer?.let { c ->
                             Text("A closer AP is louder: ${c.rssi} dBm (${c.bssid}) vs ${w.rssi} dBm here. " +
                                 "You're probably not on the AP you're under - Toggle Wi-Fi.", color = Bad, fontWeight = FontWeight.SemiBold)
@@ -198,7 +209,7 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                 }
             }
 
-            PhotoCard(vm, s)
+            PhotoCard(vm, s, wlcNumber = s.site?.number, source = "site list")
             SpeedCard(vm, s)
 
             s.message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
@@ -253,7 +264,7 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
 
 /** The label photo for the AP the tablet is on. [wlcNumber]: the AP number the WLC reports (Inspect). */
 @Composable
-fun PhotoCard(vm: FieldViewModel, s: FieldState, wlcNumber: Int? = null) {
+fun PhotoCard(vm: FieldViewModel, s: FieldState, wlcNumber: Int? = null, source: String = "WLC") {
     val p = vm.photoHere(s)
     if (s.readingLabel) { Text("Reading the label..."); LinearProgressIndicator(Modifier.fillMaxWidth()); return }
     if (p == null) {
@@ -274,8 +285,8 @@ fun PhotoCard(vm: FieldViewModel, s: FieldState, wlcNumber: Int? = null) {
                 val v = Labels.verdict(wlcNumber, s.tag, o?.number)
                 when {
                     o == null -> Text("OCR: label unreadable - check the photo", color = Warn)
-                    v == Labels.Verdict.VERIFIED -> Text("OCR \u2713\u2713 label reads ${o.text} = WLC AP #$wlcNumber", color = Good, fontWeight = FontWeight.SemiBold)
-                    v == Labels.Verdict.MISMATCH -> Text("OCR \u2715 label reads ${o.text} \u2260 WLC AP #$wlcNumber", color = Bad, fontWeight = FontWeight.SemiBold)
+                    v == Labels.Verdict.VERIFIED -> Text("OCR \u2713\u2713 label reads ${o.text} = $source AP #$wlcNumber", color = Good, fontWeight = FontWeight.SemiBold)
+                    v == Labels.Verdict.MISMATCH -> Text("OCR \u2715 label reads ${o.text} \u2260 $source AP #$wlcNumber", color = Bad, fontWeight = FontWeight.SemiBold)
                     v == Labels.Verdict.CONFLICT -> Text("OCR: label reads ${o.text} ≠ typed #${s.tag}", color = Bad)
                     v == Labels.Verdict.CONSISTENT -> Text("OCR: label reads ${o.text} = typed #${s.tag}", color = Good)
                     else -> Text("OCR: label reads ${o.text} (#${o.number})", fontWeight = FontWeight.SemiBold)
