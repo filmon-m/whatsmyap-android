@@ -263,7 +263,9 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "tx_link_mbps" to w?.linkMbps, "gateway_ip" to w?.gateway,
             "ap_number" to (s.tag ?: ocrNum), "label_entered" to s.tag,
         )
-        s.closer?.let { c -> row["closer_bssid"] = c.bssid; row["closer_rssi_dbm"] = c.rssi }
+        // only when it still holds for THIS row's radio: another AP (not our AP's other band), 10+ dB louder
+        s.closer?.takeIf { c -> w != null && c.apKey != w.apKey && c.rssi - w.rssi >= CLOSER_DB }
+            ?.let { c -> row["closer_bssid"] = c.bssid; row["closer_rssi_dbm"] = c.rssi }
         s.site?.let { h ->            // never in label_verdict: field rows don't claim the WLC's answer
             row["sitelist_ap"] = h.hit.ap
             row["sitelist_name"] = h.list.name
