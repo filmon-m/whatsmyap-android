@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -87,6 +88,11 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
         while (true) { vm.refreshWifi(); delay(5000) }
     }
 
+    val toggleWifi: () -> Unit = {
+        vm.toggleWifi {
+            runCatching { context.startActivity(Intent(android.provider.Settings.Panel.ACTION_WIFI)) }
+        }
+    }
     var askName by remember { mutableStateOf(false) }
     var askTarget by remember { mutableStateOf(false) }
     var surveyMenu by remember { mutableStateOf(false) }
@@ -125,15 +131,21 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (s.survey == null) {
                         Text("No survey running. Checks still go to the normal log.")
-                        Button(onClick = { askName = true }) { Text("Start a survey") }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Button(onClick = { askName = true }) { Text("Start a survey") }
+                            Spacer(Modifier.weight(1f))
+                            OutlinedButton(onClick = toggleWifi) { Text("Toggle Wi-Fi") }
+                        }
                     } else {
                         val st = s.surveyStats
                         Text("Survey: ${s.survey}", fontWeight = FontWeight.SemiBold)
                         if (st != null) Text(listOf(count(st.checks, "check"), count(st.aps, "AP"), count(st.tests, "speed test"), count(st.photos, "photo")).joinToString(" \u00b7 "),
                             style = MaterialTheme.typography.bodySmall)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Button(onClick = { share(finish = true) }) { Text("Finish & send") }
                             OutlinedButton(onClick = { surveyMenu = true }) { Text("More") }
+                            Spacer(Modifier.weight(1f))
+                            OutlinedButton(onClick = toggleWifi) { Text("Toggle Wi-Fi") }
                         }
                     }
                     packing?.let { Text(it, style = MaterialTheme.typography.bodySmall); LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -152,6 +164,10 @@ fun FieldSurveyScreen(vm: FieldViewModel, onCamera: () -> Unit, onReport: () -> 
                         Text("RSSI:   ${w.rssi} dBm   Link rate: ${w.linkMbps ?: "?"} Mbps")
                         Text("IP:     ${w.ip}" + if (w.gateway.isNotBlank()) "   GW ${w.gateway}" else "")
                         s.wifiError?.let { Text(it, color = Warn) }
+                        s.closer?.let { c ->
+                            Text("A closer AP is louder: ${c.rssi} dBm (${c.bssid}) vs ${w.rssi} dBm here. " +
+                                "You're probably not on the AP you're under - Toggle Wi-Fi.", color = Bad, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                     Text("Where:  " + (s.place?.text() ?: if (s.locating) "locating..." else "N/A"),
                         style = MaterialTheme.typography.bodySmall)

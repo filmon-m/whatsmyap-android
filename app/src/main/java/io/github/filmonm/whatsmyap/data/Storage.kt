@@ -46,6 +46,7 @@ data class Photo(
     val apKey: String,             // the AP it belongs to (radio MAC prefix)
     val ocr: LabelReader.Result?,  // null = unreadable (or OCR didn't run)
     val ocrRan: Boolean,
+    val ocrText: String? = null,   // everything the reader saw, for diagnosing misses
 ) {
     fun columns(): Map<String, Any?> = buildMap {
         put("photo_file", file.name)
@@ -55,6 +56,7 @@ data class Photo(
             put("ocr_label", ocr?.text ?: "UNREADABLE")
             put("ocr_number", ocr?.number)
             put("ocr_secs", ocr?.let { "%.1f".format(it.ms / 1000.0) })
+            put("ocr_text", ocrText?.ifBlank { null })
         }
     }
 }

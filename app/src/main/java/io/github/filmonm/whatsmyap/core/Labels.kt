@@ -12,11 +12,13 @@ object Labels {
         'O' to '0', 'o' to '0', 'D' to '0', 'Q' to '0',
         'I' to '1', 'l' to '1', '|' to '1', 'i' to '1',
         'S' to '5', 's' to '5', 'B' to '8', 'Z' to '2', 'z' to '2', 'G' to '6', 'g' to '9',
+        // slashed zero (labels printed "AP1Ø", "APØ4") and how OCR tends to see it
+        'Ø' to '0', 'ø' to '0', '∅' to '0', '⌀' to '0', 'θ' to '0', 'Θ' to '0', 'Φ' to '0', 'φ' to '0',
     )
 
     /** "AP" (or a usual misread: AF, AR, 4P, "A P"), an optional separator, then 1-4 digits. */
     private val LABEL = Regex(
-        "(?<![A-Za-z0-9])(?:AP|AF|AR|4P|A\\s?P)[\\s_\\-.#:]{0,2}([0-9OoDQIl|iSsBZzGg]{1,4})(?![A-Za-z0-9])",
+        "(?<![A-Za-z0-9])(?:AP|AF|AR|4P|A\\s?P)[\\s_\\-.#:]{0,2}([0-9OoDQIl|iSsBZzGgØø∅⌀θΘΦφ]{1,4})(?![A-Za-z0-9Øø∅⌀θΘΦφ])",
         RegexOption.IGNORE_CASE,
     )
 

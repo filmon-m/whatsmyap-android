@@ -286,6 +286,7 @@ fun InspectScreen(vm: NetEngViewModel, field: FieldViewModel, onCamera: () -> Un
                     val wlcRssi = c?.rssiWlc?.let { " / WLC $it" } ?: ""
                     val snr = c?.snrWlc?.let { "   SNR $it dB" } ?: if (c != null && s.vendor == "aruba8") "   SNR pending" else ""
                     Text("RSSI:  tablet ${w.rssi}$wlcRssi dBm$snr")
+                    fs.closer?.let { cl -> Text("A closer AP is louder (${cl.rssi} dBm, ${cl.bssid}) - toggle Wi-Fi to move to it", color = Bad) }
                     Text("SSID:  ${w.ssid.ifBlank { "? (turn Location on)" }}")
                     Text("IP:    ${w.ip}")
                 }

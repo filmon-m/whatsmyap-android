@@ -17,6 +17,14 @@ class LabelsTest {
         assertEquals(17, Labels.parse("AP-O17").single().number)
     }
 
+    @Test fun slashedZero() {
+        // labels printed with a slashed zero, as seen at a site: "AP1Ø" was read as AP1, "APØ4" not at all
+        assertEquals(listOf(10), Labels.parse("aruba | AP1Ø").map { it.number })
+        assertEquals(listOf(4), Labels.parse("aruba\nNETWORKS\nAPØ4").map { it.number })
+        assertEquals(listOf(104), Labels.parse("AP-1ø4").map { it.number })
+        assertEquals(listOf(10), Labels.parse("AP1∅").map { it.number })
+    }
+
     @Test fun ignoresTextThatIsNotAnApLabel() {
         assertTrue(Labels.parse("CISCO Aironet LAPTOP MAP 12").isEmpty())
     }

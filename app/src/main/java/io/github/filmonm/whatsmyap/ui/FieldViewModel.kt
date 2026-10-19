@@ -23,6 +23,7 @@ import io.github.filmonm.whatsmyap.data.WifiState
 import io.github.filmonm.whatsmyap.data.WlcMemory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -48,6 +49,8 @@ data class Speed(val result: SpeedResult, val bssid: String, val band: String, v
 data class FieldState(
     val wifi: WifiState? = null,
     val wifiError: String? = null,
+    /** Strongest radio on our SSID, when it's another AP than the one we're on. */
+    val closer: WifiSource.Seen? = null,
     val place: Place? = null,
     val locating: Boolean = false,
     val tag: Int? = null,
@@ -61,6 +64,11 @@ data class FieldState(
 )
 
 class FieldViewModel(app: Application) : AndroidViewModel(app) {
+
+    companion object {
+        /** A different AP this much louder than ours means we're not on the AP we're standing under. */
+        const val CLOSER_DB = 10
+    }
 
     private val ctx get() = getApplication<Application>()
     private val survey = Survey(app)
@@ -92,8 +100,11 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     // ------------------------------------------------------------------ reads
     fun refreshWifi() {
         val w = runCatching { WifiSource.read(ctx) }.getOrNull()
+        val near = w?.let { runCatching { WifiSource.nearest(ctx, it.ssid) }.getOrNull() }
+        // a different AP that's clearly louder: the tablet is holding on to a farther one
+        val closer = near?.takeIf { w != null && it.apKey != w.apKey && it.rssi - w.rssi >= CLOSER_DB }
         _state.update {
-            it.copy(wifi = w, wifiError = when {
+            it.copy(wifi = w, closer = closer, wifiError = when {
                 w == null -> "Not connected to Wi-Fi"
                 w.bssid.isEmpty() -> "Turn on Location and allow it for this app to see the AP (BSSID)"
                 else -> null
@@ -117,6 +128,24 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissMessage() = _state.update { it.copy(message = null) }
+
+    /** Off, confirmed off, on again. false = this tablet doesn't allow it (the screen opens the Wi-Fi panel instead). */
+    fun toggleWifi(onNotAllowed: () -> Unit) {
+        viewModelScope.launch {
+            _state.update { it.copy(message = "Turning Wi-Fi off and on...") }
+            if (!WifiSource.toggle(ctx)) {
+                _state.update { it.copy(message = "Turn Wi-Fi off, then on, in the panel - the tablet will join the nearest AP") }
+                onNotAllowed()
+                return@launch
+            }
+            for (i in 0 until 30) {                               // up to 30 s to rejoin
+                delay(1000)
+                refreshWifi()
+                if (_state.value.wifi?.bssid?.isNotEmpty() == true) break
+            }
+            _state.update { it.copy(message = _state.value.wifi?.let { w -> "Back on ${w.ssid} at ${w.rssi} dBm" } ?: "Wi-Fi is back on - waiting to join") }
+        }
+    }
 
     /** The photo/speed shown belong to the AP the tablet is on now. */
     fun photoHere(s: FieldState = _state.value): Photo? =
@@ -153,14 +182,15 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val sha = withContext(Dispatchers.IO) { Storage.sha256(file) }
             val takenAt = file.lastModified().takeIf { it > 0 } ?: System.currentTimeMillis()   // before any rename
-            val ocr = runCatching { LabelReader.readFile(ctx, file, _state.value.tag) }.getOrNull()
+            val read = runCatching { LabelReader.read(ctx, file, _state.value.tag) }.getOrNull()
+            val ocr = read?.first
             var f = file
             val n = _state.value.tag ?: ocr?.number
             if (n != null) {                                  // name the file after the AP
                 val renamed = File(file.parentFile, file.nameWithoutExtension.substringBefore("_AP") + "_AP$n.jpg")
                 if (!renamed.exists() && file.renameTo(renamed)) f = renamed
             }
-            val photo = Photo(f, sha, Storage.timestamp(Date(takenAt)), wifi?.apKey.orEmpty(), ocr, ocrRan = true)
+            val photo = Photo(f, sha, Storage.timestamp(Date(takenAt)), wifi?.apKey.orEmpty(), ocr, ocrRan = true, ocrText = read?.second)
             _state.update { it.copy(photo = photo, readingLabel = false) }
             log(photo.columns(), wifiAt = wifi)
         }
@@ -229,6 +259,7 @@ class FieldViewModel(app: Application) : AndroidViewModel(app) {
             "tx_link_mbps" to w?.linkMbps, "gateway_ip" to w?.gateway,
             "ap_number" to (s.tag ?: ocrNum), "label_entered" to s.tag,
         )
+        s.closer?.let { c -> row["closer_bssid"] = c.bssid; row["closer_rssi_dbm"] = c.rssi }
         memory.site(w?.ip)?.let { (site, type) -> row["site"] = site; row["site_type"] = type }   // learned on WLC visits
         row.putAll(locationColumns())
         if (photo != null) {

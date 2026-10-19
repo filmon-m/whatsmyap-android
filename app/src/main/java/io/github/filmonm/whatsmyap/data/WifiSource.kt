@@ -45,4 +45,44 @@ object WifiSource {
             linkMbps = info.linkSpeed.takeIf { it > 0 }, ip = ip, gateway = gw,
         )
     }
+
+    // ------------------------------------------------------------------ nearby APs
+    private var lastScan = 0L
+
+    /** Another radio heard nearby (from the system's Wi-Fi scan). */
+    data class Seen(val bssid: String, val ssid: String, val rssi: Int, val freqMhz: Int) {
+        val apKey get() = bssid.take(14)
+    }
+
+    /**
+     * The strongest radio on the same SSID. Asks for a fresh scan at most every 30 s (Android allows a
+     * foreground app 4 scans per 2 minutes); otherwise uses the system's latest results.
+     */
+    @Suppress("DEPRECATION")
+    fun nearest(context: Context, ssid: String): Seen? {
+        if (ssid.isEmpty()) return null
+        val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+        val now = System.currentTimeMillis()
+        if (now - lastScan > 30_000) { lastScan = now; runCatching { wm.startScan() } }
+        return runCatching { wm.scanResults }.getOrNull().orEmpty()
+            .filter { it.SSID == ssid && !it.BSSID.isNullOrEmpty() }
+            .maxByOrNull { it.level }
+            ?.let { Seen(it.BSSID.lowercase(), it.SSID, it.level, it.frequency) }
+    }
+
+    /**
+     * Turn Wi-Fi off, wait for the OS to confirm, turn it back on - the tablet then joins the strongest AP.
+     * Android 10+ only lets system / device-owner apps do this; elsewhere returns false and the caller opens
+     * the Wi-Fi panel so the tester flips it.
+     */
+    @Suppress("DEPRECATION")
+    suspend fun toggle(context: Context): Boolean {
+        val wm = context.applicationContext.getSystemService(WifiManager::class.java)
+        if (!runCatching { wm.setWifiEnabled(false) }.getOrDefault(false)) return false
+        for (i in 0 until 50) {                                   // up to 10 s for "off"
+            if (wm.wifiState == WifiManager.WIFI_STATE_DISABLED) break
+            kotlinx.coroutines.delay(200)
+        }
+        return runCatching { wm.setWifiEnabled(true) }.getOrDefault(false)
+    }
 }
