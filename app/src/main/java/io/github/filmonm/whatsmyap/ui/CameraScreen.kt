@@ -54,7 +54,14 @@ import java.util.concurrent.Executors
 /** In-app camera: live label reading in the viewfinder, then the full-size photo is saved. */
 @OptIn(ExperimentalGetImage::class)
 @Composable
-fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
+fun CameraScreen(
+    vm: FieldViewModel,
+    onDone: () -> Unit,
+    /** Locate survey: photos go here instead of the label check, and the camera stays open for more. */
+    onSaved: ((File) -> Unit)? = null,
+    title: String? = null,
+) {
+    var saved by remember { mutableStateOf(0) }
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
     var live by remember { mutableStateOf<String?>(null) }
@@ -109,7 +116,8 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
             analysis.setAnalyzer(analysisExecutor) { proxy ->
                 val now = System.currentTimeMillis()
                 val media = proxy.image
-                if (media == null || now - lastAnalysis[0] < 600) { proxy.close(); return@setAnalyzer }
+                // no live label reading when locating APs
+                if (onSaved != null || media == null || now - lastAnalysis[0] < 600) { proxy.close(); return@setAnalyzer }
                 lastAnalysis[0] = now
                 val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
                 LabelReader.recognizer.process(image)
@@ -139,6 +147,12 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    if (onSaved != null) {
+                        onSaved(file)
+                        saved++
+                        busy = false
+                        return
+                    }
                     vm.onPhotoTaken(file)
                     onDone()
                 }
@@ -179,7 +193,10 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color(0xAA000000)).safeDrawingPadding().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
+            if (onSaved != null) Text(
+                (title ?: "Photos") + if (saved > 0) " \u00b7 ${count(saved, "photo")} saved" else " \u00b7 wide shot, close-up, anything useful",
+                color = if (saved > 0) Good else Color.White, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium,
+            ) else Text(
                 live?.let { "Label in view: $it" } ?: "Aim at the AP label - fill the frame, avoid glare",
                 color = if (live != null) Good else Color.White,
                 fontWeight = if (live != null) FontWeight.SemiBold else FontWeight.Normal,
@@ -193,7 +210,7 @@ fun CameraScreen(vm: FieldViewModel, onDone: () -> Unit) {
             Text("Pinch to zoom, tap to focus", color = Color(0xFFBBBBBB), style = MaterialTheme.typography.labelSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { take() }, enabled = !busy) { Text(if (busy) "Saving..." else "Take photo") }
-                OutlinedButton(onClick = onDone) { Text("Cancel", color = Color.White) }
+                OutlinedButton(onClick = onDone) { Text(if (onSaved != null) "Done" else "Cancel", color = Color.White) }
             }
         }
     }

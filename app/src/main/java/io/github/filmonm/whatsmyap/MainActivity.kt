@@ -20,6 +20,8 @@ import io.github.filmonm.whatsmyap.ui.DebugApScreen
 import io.github.filmonm.whatsmyap.ui.DebugWlcScreen
 import io.github.filmonm.whatsmyap.ui.HomeScreen
 import io.github.filmonm.whatsmyap.ui.InspectScreen
+import io.github.filmonm.whatsmyap.ui.LocateScreen
+import io.github.filmonm.whatsmyap.ui.LocateViewModel
 import io.github.filmonm.whatsmyap.ui.NetEngScreen
 import io.github.filmonm.whatsmyap.ui.NetEngViewModel
 import io.github.filmonm.whatsmyap.ui.ReportScreen
@@ -46,6 +48,9 @@ fun App(activity: ComponentActivity) {
     val field: FieldViewModel = viewModel(viewModelStoreOwner = activity)
     val neteng: NetEngViewModel = viewModel(viewModelStoreOwner = activity)
     neteng.field = field
+    val locate: LocateViewModel = viewModel(viewModelStoreOwner = activity)
+    locate.field = field
+    locate.neteng = neteng
     NavHost(navController = nav, startDestination = "home") {
         composable("home") { HomeScreen(onField = { nav.navigate("field") }, onNetEng = { nav.navigate("neteng") },
                 onResults = { nav.navigate("results") }, onSettings = { nav.navigate("settings") }) }
@@ -58,12 +63,20 @@ fun App(activity: ComponentActivity) {
         composable("report") { ReportScreen(field, onBack = { nav.popBackStack() }) }
         composable("results") { ReportScreen(field, onBack = { nav.popBackStack() }, all = true) }
         composable("neteng") {
-            NetEngScreen(neteng, onInspect = { nav.navigate("inspect") }, onDebugAp = { nav.navigate("debugap") },
+            NetEngScreen(neteng, onLocate = { nav.navigate("locate") }, onInspect = { nav.navigate("inspect") }, onDebugAp = { nav.navigate("debugap") },
                 onDebugWlc = { nav.navigate("debugwlc") }, onVerify = { nav.navigate("verify") }, onBack = { nav.popBackStack() })
         }
         composable("inspect") { InspectScreen(neteng, field, onCamera = { nav.navigate("camera") }, onBack = { nav.popBackStack() }) }
         composable("debugap") { DebugApScreen(neteng, field, onBack = { nav.popBackStack() }) }
         composable("debugwlc") { DebugWlcScreen(neteng, field, onBack = { nav.popBackStack() }) }
         composable("verify") { VerifyScreen(neteng, onBack = { nav.popBackStack() }) }
+        composable("locate") {
+            LocateScreen(locate, field, neteng, onCamera = { nav.navigate("locatecam") }, onReport = { nav.navigate("locatereport") },
+                onBack = { nav.popBackStack() })
+        }
+        composable("locatecam") {
+            CameraScreen(field, onDone = { nav.popBackStack() }, onSaved = locate::onPhoto, title = locate.state.value.current)
+        }
+        composable("locatereport") { ReportScreen(field, onBack = { nav.popBackStack() }, stage = locate::stageReport) }
     }
 }

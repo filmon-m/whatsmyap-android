@@ -319,7 +319,7 @@ function photoCard(r) {
         : `${r.label === "VERIFIED" ? "✓✓" : ["MISMATCH", "CONFLICT"].includes(r.label) ? "✕" : "✓"} OCR: ${r.ocr_label}${r.label ? " · " + LABEL_TEXT[r.label] : ""}`)
       : r.label_entered ? el("span", {}, `label #${r.label_entered} (typed)`) : null);
 }
-function modName(r) { return { testmyap: "test", debugmyap: "health", fieldsurvey: "field" }[r.module] || "inspect"; }
+function modName(r) { return { testmyap: "test", debugmyap: "health", fieldsurvey: "field", locate: "locate", verify: "verify" }[r.module] || "inspect"; }
 function fmtMbps(m) { return m == null ? "?" : m >= 1000 ? (m / 1000) + " Gbps" : m + " Mbps"; }
 function fmtWhen(d) {
   if (!d) return "";
@@ -471,8 +471,11 @@ function viewAp(key) {
     }));
   }
   const photos = [...new Map(a.rows.filter(r => r.photo_file).map(r => [r.photo_file, r])).values()].reverse();
-  if (photos.length) main.append(el("h2", {}, `Label photo${photos.length > 1 ? "s" : ""}`),
-    el("div", { class: "photos" }, photos.slice(0, 6).map(photoCard)),
+  const notes = a.rows.filter(r => r.comment);
+  if (notes.length) main.append(el("h2", {}, `Note${notes.length > 1 ? "s" : ""}`),
+    el("div", {}, notes.map(r => el("p", { class: "note" }, `${fmtWhen(r.ts)}: ${r.comment}`))));
+  if (photos.length) main.append(el("h2", {}, `${a.rows.some(r => r.module === "locate") ? "Photo" : "Label photo"}${photos.length > 1 ? "s" : ""}`),
+    el("div", { class: "photos" }, photos.slice(0, 12).map(photoCard)),
     el("div", { class: "hash" }, `SHA-256 of latest: ${photos[0].photo_sha256 || "?"}`));
   if (a.lastHealth) apHealth(a);
   main.append(el("h2", {}, "All checks"), historyTable(a.rows));

@@ -21,7 +21,8 @@ import java.util.zip.ZipOutputStream
  *   <name>/report.html    the dashboard with the survey built in - opens offline
  *   <name>/manifest.txt   SHA-256 of every file, which part it's in
  */
-class Survey(private val context: Context) {
+/** [prefsName]: which kind of survey this is ("survey" = Field Survey, "survey_locate" = locate APs); each has its own running survey. */
+class Survey(private val context: Context, prefsName: String = "survey") {
 
     companion object {
         const val REVIEW_PX = 1600
@@ -31,7 +32,7 @@ class Survey(private val context: Context) {
             name.trim().replace(Regex("[^A-Za-z0-9_.-]+"), "_").trim('.', '_').take(60)
     }
 
-    private val prefs = context.getSharedPreferences("survey", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     val active: String? get() = prefs.getString("name", null)
     val started: String? get() = prefs.getString("started", null)

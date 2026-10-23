@@ -22,11 +22,11 @@ import java.io.File
 /** The web dashboard in a WebView: the running survey's report, or every check on the tablet (all = true). */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun ReportScreen(vm: FieldViewModel, onBack: () -> Unit, all: Boolean = false) {
+fun ReportScreen(vm: FieldViewModel, onBack: () -> Unit, all: Boolean = false, stage: (suspend () -> File?)? = null) {
     var file by remember { mutableStateOf<File?>(null) }
     var failed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        file = runCatching { if (all) vm.stageResults() else vm.stageReport() }.getOrNull()
+        file = runCatching { stage?.invoke() ?: if (all) vm.stageResults() else vm.stageReport() }.getOrNull()
         failed = file == null
     }
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {

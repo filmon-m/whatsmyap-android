@@ -152,7 +152,7 @@ private fun Overall(overall: String?, rows: List<HealthRow>) {
 // ==================================================================================== hub + login
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Unit, onDebugWlc: () -> Unit, onVerify: () -> Unit, onBack: () -> Unit) {
+fun NetEngScreen(vm: NetEngViewModel, onLocate: () -> Unit, onInspect: () -> Unit, onDebugAp: () -> Unit, onDebugWlc: () -> Unit, onVerify: () -> Unit, onBack: () -> Unit) {
     val s by vm.state.collectAsStateWithLifecycle()
     Screen("Network Engineer", onBack, back = "‹ Home") {
         if (s.wlcName == null) {
@@ -164,6 +164,7 @@ fun NetEngScreen(vm: NetEngViewModel, onInspect: () -> Unit, onDebugAp: () -> Un
                     Text("${s.wlcLabel} · ${s.host}", style = MaterialTheme.typography.bodySmall)
                 }
             }
+            Tile("Survey (locate APs)", "Record where each AP is: label, photos, a note. No checks; zipped like a Field Survey.", onLocate)
             Tile("Inspect", "Which AP am I on? Compare it with the label, photo and speed.", onInspect)
             Tile("Debug my AP", "Health of the AP you're under (or any AP by name or number).", onDebugAp)
             Tile("Debug my WLC", "Controller health: CPU, memory, uplinks, APs down, clients.", onDebugWlc)
