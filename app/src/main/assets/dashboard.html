@@ -165,7 +165,7 @@ function normalize(r) {
   o.ts = parseTs(r.timestamp);
   o.speedAvg = num(r.speed_avg_mbps); o.speedMin = num(r.speed_min_mbps); o.speedMax = num(r.speed_max_mbps);
   o.up = num(r.speed_up_mbps); o.lat = num(r.latency_ms); o.latLoaded = num(r.latency_loaded_ms); o.jitter = num(r.jitter_ms);
-  o.rssi = num(r.rssi_tablet_dbm);
+  o.rssi = r.module === "locate" ? null : num(r.rssi_tablet_dbm);   // locate: the tablet need not be on that AP
   // label verdict: VERIFIED (OCR = WLC) / CONFIRMED (typed = WLC) / CONSISTENT (no WLC; OCR = tag)
   // MISMATCH / CONFLICT / REVIEW (photo, label unreadable). Logs before v2.12 only had typed MATCH/MISMATCH.
   o.label = ["VERIFIED", "CONFIRMED", "CONSISTENT", "MISMATCH", "CONFLICT"].includes(r.label_verdict) ? r.label_verdict
