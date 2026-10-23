@@ -96,11 +96,11 @@ fun LocateScreen(vm: LocateViewModel, field: FieldViewModel, neteng: NetEngViewM
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (s.survey == null) {
-                        Text("Record where each AP is: its label, photos and a note. No checks - just a record.")
+                        Text("Record where each AP or IDF is: its label, photos and a note. No checks - just a record.")
                         Button(onClick = { askName = true }) { Text("Start a survey") }
                     } else {
                         Text("Survey: ${s.survey}", fontWeight = FontWeight.SemiBold)
-                        Text(listOf(count(s.aps.size, "AP"), count(s.aps.sumOf { it.photos }, "photo"),
+                        Text(listOf(count(s.aps.size, "label"), count(s.aps.sumOf { it.photos }, "photo"),
                             count(s.aps.count { it.note != null }, "note")).joinToString(" · "), style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Button(onClick = { share(finish = true) }) { Text("Finish & send") }
@@ -138,13 +138,13 @@ fun LocateScreen(vm: LocateViewModel, field: FieldViewModel, neteng: NetEngViewM
             if (s.survey != null) {
                 // which AP we're collecting for
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(label, { label = it }, label = { Text("AP label, e.g. AP-14") }, singleLine = true,
+                    OutlinedTextField(label, { label = it }, label = { Text("Label, e.g. AP01 or IDF01") }, singleLine = true,
                         modifier = Modifier.weight(1f))
-                    Button(onClick = { vm.setAp(label); label = "" }, enabled = label.isNotBlank()) { Text("Start AP") }
+                    Button(onClick = { vm.setAp(label); label = "" }, enabled = label.isNotBlank()) { Text("Start") }
                 }
                 val cur = s.current
                 if (cur == null) {
-                    Text("Enter the label of the AP in front of you. Photos and notes then go to that AP until you start another.",
+                    Text("Enter the label of what's in front of you (an AP, an IDF...). Photos and notes then go to it until you start another.",
                         style = MaterialTheme.typography.bodySmall)
                 } else {
                     val ap = s.aps.firstOrNull { it.label == cur }
@@ -164,7 +164,7 @@ fun LocateScreen(vm: LocateViewModel, field: FieldViewModel, neteng: NetEngViewM
 
                 // everything collected so far; tap one to add to it
                 if (s.aps.isNotEmpty()) {
-                    Text("APs in this survey", fontWeight = FontWeight.SemiBold)
+                    Text("In this survey", fontWeight = FontWeight.SemiBold)
                     s.aps.forEach { ap ->
                         OutlinedCard(onClick = { vm.setAp(ap.label) }, modifier = Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {

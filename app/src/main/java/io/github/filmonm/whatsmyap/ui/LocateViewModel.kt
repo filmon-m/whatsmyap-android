@@ -123,7 +123,9 @@ class LocateViewModel(app: Application) : AndroidViewModel(app) {
             "site" to site.ifEmpty { null }, "site_type" to siteType.ifEmpty { null },
             "wlc_name" to ne.wlcName, "wlc_vendor" to ne.vendor.ifEmpty { null },
             // the label as entered names the AP here (there is no WLC check in a locate survey)
-            "ap_name" to label, "ap_number" to Labels.apNumber(label), "ap_label" to label,
+            // any label: AP01, IDF01, MDF... - only an AP label gets an AP number
+            "ap_name" to label, "ap_number" to if (Regex("(?i)\\bAP|AP[\\s_-]*\\d").containsMatchIn(label)) Labels.apNumber(label) else null,
+            "ap_label" to label,
             "network" to w?.ssid, "ssid" to w?.ssid, "band" to w?.band,
             "tablet_bssid" to w?.bssid, "tablet_ip" to w?.ip, "rssi_tablet_dbm" to w?.rssi,
             "tablet_on_ap" to seen,
